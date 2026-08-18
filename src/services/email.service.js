@@ -6,7 +6,31 @@ const transporter = nodemailer.createTransport({
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
+  // Sin esto, una configuración SMTP incorrecta o bloqueada por la red puede
+  // dejar la conexión "colgada" varios minutos (los defaults de Nodemailer
+  // son de hasta 2 minutos), congelando cualquier request que espere el
+  // envío del correo. Con timeouts cortos, falla rápido y se ve en los logs.
+  connectionTimeout: 10000, // 10s para establecer conexión con el servidor SMTP
+  greetingTimeout: 10000, // 10s esperando el saludo del servidor
+  socketTimeout: 15000, // 15s de inactividad en el socket
 });
+
+// Verificación al arrancar el servidor: deja evidencia clara en los logs de
+// Railway sobre si las credenciales de correo están bien configuradas, sin
+// bloquear el arranque de la aplicación.
+if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+  transporter
+    .verify()
+    .then(() => console.log("[email.service] Conexión SMTP verificada correctamente."))
+    .catch((err) =>
+      console.error(
+        "[email.service] ADVERTENCIA: no se pudo verificar la conexión SMTP. Revisa EMAIL_SERVICE/EMAIL_USER/EMAIL_PASS. Detalle:",
+        err.message
+      )
+    );
+} else {
+  console.warn("[email.service] ADVERTENCIA: EMAIL_USER o EMAIL_PASS no están configurados. Los correos no se enviarán.");
+}
 
 export async function sendEmail({ to, subject, html }) {
   try {
@@ -16,6 +40,7 @@ export async function sendEmail({ to, subject, html }) {
       subject,
       html,
     });
+    console.log(`[email.service] Correo enviado a ${to} (messageId: ${info.messageId})`);
     return info;
   } catch (err) {
     console.error("[email.service] No se pudo enviar el correo:", err.message);

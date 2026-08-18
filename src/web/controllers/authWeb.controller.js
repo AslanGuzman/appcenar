@@ -92,11 +92,16 @@ async function sendActivationEmail(user) {
   await user.save();
 
   const activationUrl = `${process.env.APP_URL}/auth/activate/${token}`;
-  await sendEmail({
+
+  // Importante: NO se espera (await) el envío del correo antes de responder
+  // al usuario. sendEmail ya maneja sus propios errores internamente, pero
+  // si el proveedor SMTP tarda o se cae, esto evita que el registro se
+  // quede "colgado" esperando la red. El correo se envía en segundo plano.
+  sendEmail({
     to: user.email,
     subject: "Activa tu cuenta en AppCenar",
     html: buildActivationEmail(user.firstName || user.userName, activationUrl),
-  });
+  }).catch((err) => console.error("[auth] Error enviando correo de activación:", err.message));
 }
 
 export async function register(req, res) {
@@ -287,11 +292,11 @@ export async function forgotPassword(req, res) {
     await user.save();
 
     const resetUrl = `${process.env.APP_URL}/auth/reset-password?token=${token}`;
-    await sendEmail({
+    sendEmail({
       to: user.email,
       subject: "Restablece tu contraseña en AppCenar",
       html: buildResetPasswordEmail(user.firstName || user.userName, resetUrl),
-    });
+    }).catch((err) => console.error("[auth] Error enviando correo de reset:", err.message));
   }
 
   req.flash("success", "Si el usuario existe, te enviamos un correo con instrucciones.");

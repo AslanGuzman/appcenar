@@ -69,11 +69,13 @@ async function createAndActivateFlow(user) {
   await user.save();
 
   const activationUrl = `${process.env.APP_URL}/api/auth/confirm-email?token=${token}`;
-  await sendEmail({
+  // No se espera (await) el envío del correo: ver nota en el flujo web sobre
+  // por qué esto no debe bloquear la respuesta HTTP.
+  sendEmail({
     to: user.email,
     subject: "Activa tu cuenta en ApiCenar",
     html: buildActivationEmail(user.firstName || user.userName, activationUrl),
-  });
+  }).catch((err) => console.error("[auth] Error enviando correo de activación:", err.message));
 }
 
 /**
@@ -316,11 +318,11 @@ export async function forgotPassword(req, res, next) {
     await user.save();
 
     const resetUrl = `${process.env.APP_URL}/reset-password?token=${token}`;
-    await sendEmail({
+    sendEmail({
       to: user.email,
       subject: "Restablece tu contraseña en ApiCenar",
       html: buildResetPasswordEmail(user.firstName || user.userName, resetUrl),
-    });
+    }).catch((err) => console.error("[auth] Error enviando correo de reset:", err.message));
 
     return success(res, { statusCode: 200, message: "Si el usuario existe, se ha enviado un correo con instrucciones." });
   } catch (err) {
