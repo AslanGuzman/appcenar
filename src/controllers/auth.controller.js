@@ -210,26 +210,85 @@ export async function registerCommerce(req, res, next) {
 /**
  * POST /api/auth/confirm-email
  */
+async function activateUserByToken(token) {
+  const user = await User.findOne({ activateToken: token });
+
+  if (!user) {
+    return { ok: false, statusCode: 404, message: "Token no encontrado." };
+  }
+
+  if (user.activateTokenExpiration < new Date()) {
+    return { ok: false, statusCode: 400, message: "El token ha expirado. Solicita uno nuevo." };
+  }
+
+  user.isActive = true;
+  user.activateToken = null;
+  user.activateTokenExpiration = null;
+  await user.save();
+
+  return { ok: true, statusCode: 200, message: "Cuenta activada correctamente. Ya puedes iniciar sesión." };
+}
+
+function renderConfirmEmailPage(res, { ok, message }) {
+  res.status(ok ? 200 : 400).send(`
+    <!DOCTYPE html>
+    <html lang="es">
+      <head>
+        <meta charset="UTF-8" />
+        <title>${ok ? "Cuenta activada" : "No se pudo activar la cuenta"} · ApiCenar</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <style>
+          body { font-family: Arial, sans-serif; background:#f5f5f5; display:flex; align-items:center; justify-content:center; height:100vh; margin:0; }
+          .card { background:#fff; padding:32px 40px; border-radius:10px; box-shadow:0 4px 16px rgba(0,0,0,.08); text-align:center; max-width:420px; }
+          h1 { font-size:20px; color:${ok ? "#16a34a" : "#dc2626"}; }
+          p { color:#374151; }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <h1>${ok ? "✅ Cuenta activada" : "⚠️ No se pudo activar"}</h1>
+          <p>${message}</p>
+        </div>
+      </body>
+    </html>
+  `);
+}
+
+/**
+ * GET /api/auth/confirm-email?token=...
+ * Endpoint pensado para ser abierto directamente desde el enlace del correo
+ * (los navegadores solo pueden seguir enlaces con GET). Reutiliza la misma
+ * lógica que el endpoint POST documentado para la API.
+ */
+export async function confirmEmailFromLink(req, res) {
+  const { token } = req.query;
+
+  if (!token) {
+    return renderConfirmEmailPage(res, { ok: false, message: "Falta el token de activación en el enlace." });
+  }
+
+  try {
+    const result = await activateUserByToken(token);
+    return renderConfirmEmailPage(res, result);
+  } catch (err) {
+    return renderConfirmEmailPage(res, { ok: false, message: "Ocurrió un error al activar la cuenta." });
+  }
+}
+
+/**
+ * POST /api/auth/confirm-email
+ * Endpoint documentado para consumidores de la API (Postman, apps móviles, etc.)
+ */
 export async function confirmEmail(req, res, next) {
   try {
     const { token } = req.body;
+    const result = await activateUserByToken(token);
 
-    const user = await User.findOne({ activateToken: token });
-
-    if (!user) {
-      return fail(res, { statusCode: 404, message: "Token no encontrado." });
+    if (!result.ok) {
+      return fail(res, { statusCode: result.statusCode, message: result.message });
     }
 
-    if (user.activateTokenExpiration < new Date()) {
-      return fail(res, { statusCode: 400, message: "El token ha expirado. Solicita uno nuevo." });
-    }
-
-    user.isActive = true;
-    user.activateToken = null;
-    user.activateTokenExpiration = null;
-    await user.save();
-
-    return success(res, { statusCode: 200, message: "Cuenta activada correctamente. Ya puedes iniciar sesión." });
+    return success(res, { statusCode: 200, message: result.message });
   } catch (err) {
     return next(err);
   }

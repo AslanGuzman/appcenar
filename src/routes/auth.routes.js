@@ -16,6 +16,7 @@ import {
   registerDelivery,
   registerCommerce,
   confirmEmail,
+  confirmEmailFromLink,
   forgotPassword,
   resetPassword,
 } from "../controllers/auth.controller.js";
@@ -183,6 +184,13 @@ router.post(
  *       404: { description: Token no encontrado }
  */
 router.post("/confirm-email", confirmEmailValidator, runValidation, confirmEmail);
+
+/**
+ * Endpoint público pensado para ser abierto desde el enlace del correo de
+ * activación (los clientes de correo/navegadores solo pueden seguir enlaces
+ * GET). Muestra una página HTML de confirmación en vez de JSON.
+ */
+router.get("/confirm-email", confirmEmailFromLink);
 
 /**
  * @swagger
