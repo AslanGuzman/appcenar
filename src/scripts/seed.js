@@ -1,4 +1,4 @@
-import "dotenv/config";
+import "../config/loadEnv.js";
 import mongoose from "mongoose";
 import { connectDatabase } from "../config/database.js";
 import { seedDefaultAdmin } from "../seeders/defaultAdmin.seeder.js";

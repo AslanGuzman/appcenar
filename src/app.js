@@ -18,6 +18,13 @@ import { ORDER_STATUS } from "./utils/constants.js";
 
 const app = express();
 
+// Railway (y la mayoría de PaaS) coloca la app detrás de un proxy que
+// termina el HTTPS. Sin esto, Express no reconoce la conexión como segura
+// y las cookies con "secure: true" nunca se guardarían en el navegador.
+if (process.env.NODE_ENV === "production" || process.env.NODE_ENV === "qa") {
+  app.set("trust proxy", 1);
+}
+
 /* ------------------------------ Middlewares base ------------------------------ */
 
 app.use(
@@ -46,7 +53,11 @@ app.use(
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
-    cookie: { maxAge: 1000 * 60 * 60 * 8 }, // 8 horas
+    cookie: {
+      maxAge: 1000 * 60 * 60 * 8, // 8 horas
+      secure: process.env.NODE_ENV === "production" || process.env.NODE_ENV === "qa",
+      sameSite: "lax",
+    },
   })
 );
 app.use(flash());

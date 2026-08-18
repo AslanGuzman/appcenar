@@ -6,9 +6,13 @@
   "type": "module",
   "scripts": {
     "dev": "cross-env NODE_ENV=development nodemon src/server.js",
-    "start": "cross-env NODE_ENV=development node src/server.js",
+    "start": "node src/server.js",
+    "start:dev": "cross-env NODE_ENV=development node src/server.js",
     "start:qa": "cross-env NODE_ENV=qa node src/server.js",
-    "seed": "cross-env NODE_ENV=development node src/scripts/seed.js"
+    "start:production": "cross-env NODE_ENV=production node src/server.js",
+    "seed": "cross-env NODE_ENV=development node src/scripts/seed.js",
+    "seed:qa": "cross-env NODE_ENV=qa node src/scripts/seed.js",
+    "seed:production": "cross-env NODE_ENV=production node src/scripts/seed.js"
   },
   "keywords": ["itla", "appcenar", "express", "mongodb"],
   "author": "",
