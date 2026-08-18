@@ -18,7 +18,7 @@ appcenar/
 │  ├─ models/                  # Esquemas de Mongoose (compartidos por web y API)
 │  ├─ routes/                  # Endpoints de la API + docs Swagger
 │  ├─ seeders/                  # Datos iniciales (admin por defecto, ITBIS)
-│  ├─ services/                 # Email (Nodemailer) y tokens (JWT/random)
+│  ├─ services/                 # Email (API de Brevo) y tokens (JWT/random)
 │  ├─ utils/                    # Helpers de respuesta, errores, paginación, constantes
 │  ├─ validators/               # Reglas de express-validator (API)
 │  ├─ views/                    # Vistas Handlebars del sitio web
@@ -53,8 +53,41 @@ cp .env.example .env.qa
 Variables clave:
 - `MONGO_URI`: cadena de conexión a MongoDB (usa una base distinta en `.env` y `.env.qa`).
 - `JWT_SECRET`: clave para firmar los tokens.
-- `EMAIL_USER` / `EMAIL_PASS`: credenciales para el envío de correos (si usas Gmail, genera una "contraseña de aplicación").
+- `BREVO_API_KEY` / `EMAIL_FROM`: credenciales para el envío de correos (ver 2.1).
 - `DEFAULT_ADMIN_*`: credenciales del administrador que se crea automáticamente al levantar el servidor.
+
+### 2.1 Configuración de correo (Brevo)
+
+El proyecto envía los correos de activación de cuenta y de restablecimiento de contraseña a través de la **API HTTP de Brevo**, no por SMTP.
+
+El motivo es el despliegue: **Railway bloquea el tráfico saliente por los puertos SMTP (25, 465, 587)** en los planes Free, Trial y Hobby — solo lo habilita desde Pro. La API de Brevo viaja por HTTPS (puerto 443), que nunca está bloqueado, así que el mismo código funciona igual en local y en producción.
+
+Pasos para configurarlo:
+
+1. Crea una cuenta gratuita en https://www.brevo.com (plan free: 300 correos/día).
+2. Ve a **Senders, Domains & Dedicated IPs > Senders > Add a sender** y registra el correo desde el que se enviarán los mensajes. Brevo te manda un código de 6 dígitos para verificarlo. No hace falta tener un dominio propio: sirve un Gmail.
+3. Ve a **SMTP & API > API Keys** y genera una key nueva.
+4. Carga los valores en tu archivo de entorno:
+
+   ```
+   BREVO_API_KEY=xkeysib-...
+   EMAIL_FROM=el_correo_que_verificaste@gmail.com
+   EMAIL_FROM_NAME=AppCenar
+   ```
+
+`EMAIL_FROM` debe coincidir exactamente con el remitente verificado en el paso 2, o Brevo rechaza el envío. `EMAIL_FROM_NAME` es opcional y por defecto es `AppCenar`.
+
+Al arrancar el servidor verás en consola si la configuración es válida:
+
+```
+[email] Brevo conectado como tu_cuenta@gmail.com. Remitente: AppCenar <...>
+```
+
+Si algo falta o la key es inválida, el servidor arranca igual y lo avisa en el log — la app sigue funcionando, solo no se envían correos.
+
+**En Railway** estas tres variables se cargan en *Settings > Variables* del servicio, no en los archivos `.env` del repositorio.
+
+> Nota sobre entregabilidad: al usar un remitente `@gmail.com` no se puede firmar el correo con DKIM a tu nombre, así que algunos mensajes pueden llegar a la carpeta de spam. Para evitarlo haría falta verificar un dominio propio en Brevo.
 
 ## 3. Base de datos: MongoDB con Docker + MongoDB Compass
 
@@ -329,7 +362,7 @@ Ambas capas comparten los mismos modelos de Mongoose, así que una acción hecha
 - Documentación con Swagger.
 - Validaciones con `express-validator`.
 - Variables de entorno con `dotenv` + `cross-env` (development/qa).
-- Envío de correos con Nodemailer.
+- Envío de correos con la API HTTP de Brevo.
 - Carga de archivos con Multer.
 - Seguridad JWT con roles (Admin, Client, Delivery, Commerce).
 - Administrador por defecto no modificable (seed automático).

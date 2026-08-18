@@ -4,7 +4,8 @@ import { Commerce } from "../../models/Commerce.js";
 import { CommerceType } from "../../models/CommerceType.js";
 import { ROLES } from "../../utils/constants.js";
 import { generateRandomToken } from "../../services/token.service.js";
-import { sendEmail, buildActivationEmail, buildResetPasswordEmail } from "../../services/email.service.js";
+import { sendEmail } from "../../services/email.service.js";
+import { buildActivationEmail, buildResetPasswordEmail } from "../../services/email.templates.js";
 import { getRoleHome } from "../middlewares/webAuth.middleware.js";
 
 const SALT_ROUNDS = 10;
@@ -93,10 +94,6 @@ async function sendActivationEmail(user) {
 
   const activationUrl = `${process.env.APP_URL}/auth/activate/${token}`;
 
-  // Importante: NO se espera (await) el envío del correo antes de responder
-  // al usuario. sendEmail ya maneja sus propios errores internamente, pero
-  // si el proveedor SMTP tarda o se cae, esto evita que el registro se
-  // quede "colgado" esperando la red. El correo se envía en segundo plano.
   sendEmail({
     to: user.email,
     subject: "Activa tu cuenta en AppCenar",

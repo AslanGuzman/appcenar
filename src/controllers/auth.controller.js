@@ -6,7 +6,8 @@ import { ROLES } from "../utils/constants.js";
 import { success, fail } from "../utils/apiResponse.js";
 import { AppError } from "../utils/appError.js";
 import { generateAccessToken, generateRandomToken } from "../services/token.service.js";
-import { sendEmail, buildActivationEmail, buildResetPasswordEmail } from "../services/email.service.js";
+import { sendEmail } from "../services/email.service.js";
+import { buildActivationEmail, buildResetPasswordEmail } from "../services/email.templates.js";
 
 const SALT_ROUNDS = 10;
 
@@ -69,8 +70,6 @@ async function createAndActivateFlow(user) {
   await user.save();
 
   const activationUrl = `${process.env.APP_URL}/api/auth/confirm-email?token=${token}`;
-  // No se espera (await) el envío del correo: ver nota en el flujo web sobre
-  // por qué esto no debe bloquear la respuesta HTTP.
   sendEmail({
     to: user.email,
     subject: "Activa tu cuenta en ApiCenar",

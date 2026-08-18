@@ -4,6 +4,7 @@ import { connectDatabase } from "./config/database.js";
 import { seedDefaultAdmin } from "./seeders/defaultAdmin.seeder.js";
 import { seedDefaultConfigurations } from "./seeders/defaultConfiguration.seeder.js";
 import { seedDemoData } from "./seeders/demoData.seeder.js";
+import { verifyEmailConfig } from "./services/email.service.js";
 
 const PORT = process.env.PORT || 8080;
 
@@ -18,6 +19,8 @@ async function bootstrap() {
     if (process.env.SEED_DEMO_DATA !== "false") {
       await seedDemoData();
     }
+
+    verifyEmailConfig();
 
     app.listen(PORT, () => {
       console.log(`[server] AppCenar corriendo en http://localhost:${PORT}`);
