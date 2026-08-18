@@ -1,0 +1,22 @@
+<div class="page-header"><h2>{{title}}</h2></div>
+<div class="brand-card p-4 mx-auto" style="max-width: 520px">
+  <form action="{{formAction}}" method="POST" enctype="multipart/form-data">
+    <div class="mb-3">
+      <label class="form-label">Nombre</label>
+      <input type="text" name="name" class="form-control" value="{{commerceType.name}}" required />
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Descripción</label>
+      <textarea name="description" class="form-control" rows="2">{{commerceType.description}}</textarea>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Ícono</label>
+      <input type="file" name="icon" class="form-control" accept="image/*" />
+      {{#if commerceType.icon}}<img src="{{commerceType.icon}}" class="mt-2" style="width:48px;height:48px;object-fit:cover;border-radius:10px" />{{/if}}
+    </div>
+    <div class="d-flex gap-2">
+      <a href="/admin/commerce-types" class="btn btn-ghost">Volver</a>
+      <button type="submit" class="btn btn-brand"><i class="bi bi-save"></i> Guardar</button>
+    </div>
+  </form>
+</div>

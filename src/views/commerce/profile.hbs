@@ -1,0 +1,40 @@
+<div class="page-header">
+  <p class="eyebrow">Cuenta</p>
+  <h2>Mi perfil</h2>
+  <p class="text-muted mb-0">Aquí puedes actualizar el correo, teléfono, horario y logo de tu comercio. Estos datos son los que ven tus clientes.</p>
+</div>
+
+<div class="brand-card p-4 mx-auto" style="max-width: 560px">
+  <form action="/commerce/profile" method="POST" enctype="multipart/form-data">
+    <div class="row g-3">
+      <div class="col-12 d-flex align-items-center gap-2">
+        {{#if commerce.logo}}<img src="{{commerce.logo}}" style="width:56px;height:56px;object-fit:cover;border-radius:12px" />{{/if}}
+        <div class="fw-semibold">{{commerce.name}}</div>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Correo</label>
+        <input type="email" name="email" class="form-control" value="{{user.email}}" required />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Teléfono</label>
+        <input type="text" name="phone" class="form-control" value="{{user.phone}}" required />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Hora de apertura</label>
+        <input type="time" name="openingTime" class="form-control" value="{{commerce.openingTime}}" required />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Hora de cierre</label>
+        <input type="time" name="closingTime" class="form-control" value="{{commerce.closingTime}}" required />
+      </div>
+      <div class="col-12">
+        <label class="form-label">Logo</label>
+        <input type="file" name="logo" class="form-control" accept="image/*" />
+      </div>
+    </div>
+    <div class="d-flex gap-2 mt-4">
+      <a href="/commerce/home" class="btn btn-ghost">Volver</a>
+      <button type="submit" class="btn btn-brand"><i class="bi bi-save"></i> Guardar cambios</button>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,37 @@
+<div class="d-flex align-items-center justify-content-between page-header">
+  <div>
+    <p class="eyebrow">Usuarios</p>
+    <h2>Administradores</h2>
+  </div>
+  <a href="/admin/administrators/new" class="btn btn-brand"><i class="bi bi-plus-lg"></i> Nuevo administrador</a>
+</div>
+
+<div class="table-responsive brand-card p-2">
+  <table class="table table-brand align-middle mb-0">
+    <thead><tr><th>Nombre</th><th>Usuario</th><th>Correo</th><th>Estado</th><th></th></tr></thead>
+    <tbody>
+      {{#each admins}}
+        <tr>
+          <td>{{this.firstName}} {{this.lastName}} {{#if this.isDefaultAdmin}}<span class="badge bg-secondary">Por defecto</span>{{/if}}</td>
+          <td>{{this.userName}}</td>
+          <td>{{this.email}}</td>
+          <td>
+            {{#if this.isActive}}
+              <span class="status-pill status-completed">Activo</span>
+            {{else}}
+              <span class="status-pill status-pending">Inactivo</span>
+            {{/if}}
+          </td>
+          <td class="text-end">
+            {{#unless this.isDefaultAdmin}}
+              {{#unless (eq this._id ../currentUserId)}}
+                <a href="/admin/administrators/{{this._id}}/edit" class="btn btn-sm btn-ghost"><i class="bi bi-pencil"></i></a>
+                <a href="/admin/administrators/{{this._id}}/toggle" class="btn btn-sm btn-ghost"><i class="bi bi-power"></i></a>
+              {{/unless}}
+            {{/unless}}
+          </td>
+        </tr>
+      {{/each}}
+    </tbody>
+  </table>
+</div>

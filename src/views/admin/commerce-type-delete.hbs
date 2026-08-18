@@ -1,0 +1,8 @@
+<div class="page-header"><h2>Eliminar tipo de comercio</h2></div>
+<div class="brand-card p-4 mx-auto" style="max-width: 520px">
+  <p>¿Está seguro que desea eliminar el tipo de comercio <strong>{{commerceType.name}}</strong> y todos los comercios asociados a este tipo?</p>
+  <form action="/admin/commerce-types/{{commerceType._id}}/delete" method="POST" class="d-flex gap-2">
+    <a href="/admin/commerce-types" class="btn btn-ghost flex-fill">Cancelar</a>
+    <button type="submit" class="btn btn-brand flex-fill"><i class="bi bi-trash"></i> Aceptar</button>
+  </form>
+</div>

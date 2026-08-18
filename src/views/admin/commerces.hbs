@@ -1,0 +1,39 @@
+<div class="page-header">
+  <p class="eyebrow">Usuarios</p>
+  <h2>Comercios</h2>
+</div>
+
+<div class="table-responsive brand-card p-2">
+  <table class="table table-brand align-middle mb-0">
+    <thead><tr><th>Comercio</th><th>Correo</th><th>Teléfono</th><th>Horario</th><th>Pedidos</th><th>Estado</th><th></th></tr></thead>
+    <tbody>
+      {{#each commerces}}
+        <tr>
+          <td class="d-flex align-items-center gap-2">
+            {{#if this.logo}}<img src="{{this.logo}}" style="width:36px;height:36px;object-fit:cover;border-radius:8px" />{{/if}}
+            {{this.name}}
+          </td>
+          <td>{{this.user.email}}</td>
+          <td>{{this.phone}}</td>
+          <td>{{this.openingTime}} - {{this.closingTime}}</td>
+          <td>{{this.orderCount}}</td>
+          <td>
+            {{#if this.user.isActive}}
+              <span class="status-pill status-completed">Activo</span>
+            {{else}}
+              <span class="status-pill status-pending">Inactivo</span>
+            {{/if}}
+          </td>
+          <td class="text-end">
+            <form action="/admin/users/{{this.user._id}}/toggle-status" method="POST">
+              <input type="hidden" name="redirectTo" value="/admin/commerces" />
+              <button type="submit" class="btn btn-sm btn-ghost">
+                {{#if this.user.isActive}}<i class="bi bi-x-circle"></i> Inactivar{{else}}<i class="bi bi-check-circle"></i> Activar{{/if}}
+              </button>
+            </form>
+          </td>
+        </tr>
+      {{/each}}
+    </tbody>
+  </table>
+</div>

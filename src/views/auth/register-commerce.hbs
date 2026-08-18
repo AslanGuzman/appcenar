@@ -1,0 +1,69 @@
+<div class="auth-card" style="max-width: 640px">
+  <div class="auth-brand">
+    <img src="/images/logo.png" alt="AppCenar" class="auth-logo" />
+    <h2>Vende en AppCenar</h2>
+    <p class="text-muted mb-0">Registra tu comercio y empieza a recibir pedidos</p>
+  </div>
+
+  <form action="/auth/register-commerce" method="POST" enctype="multipart/form-data" novalidate>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Nombre del comercio</label>
+        <input type="text" name="name" class="form-control" required value="{{formData.name}}" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Tipo de comercio</label>
+        <select name="commerceTypeId" class="form-select" required>
+          <option value="" disabled {{#unless formData.commerceTypeId}}selected{{/unless}}>Selecciona...</option>
+          {{#each commerceTypes}}
+            <option value="{{this._id}}" {{#if (eq this._id ../formData.commerceTypeId)}}selected{{/if}}>{{this.name}}</option>
+          {{/each}}
+        </select>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Teléfono</label>
+        <input type="text" name="phone" class="form-control" required value="{{formData.phone}}" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Correo</label>
+        <input type="email" name="email" class="form-control" required value="{{formData.email}}" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Hora de apertura</label>
+        <input type="time" name="openingTime" class="form-control" required value="{{formData.openingTime}}" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Hora de cierre</label>
+        <input type="time" name="closingTime" class="form-control" required value="{{formData.closingTime}}" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Nombre de usuario</label>
+        <input type="text" name="userName" class="form-control" required value="{{formData.userName}}" />
+      </div>
+      <div class="col-12">
+        <label class="form-label">Descripción (opcional)</label>
+        <textarea name="description" class="form-control" rows="2">{{formData.description}}</textarea>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Contraseña</label>
+        <input type="password" name="password" class="form-control" required />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Confirmar contraseña</label>
+        <input type="password" name="confirmPassword" class="form-control" required />
+      </div>
+      <div class="col-12">
+        <label class="form-label">Logo del comercio</label>
+        <input type="file" name="logo" class="form-control" accept="image/*" />
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-brand w-100 py-2 mt-4">
+      <i class="bi bi-check2-circle"></i> Crear comercio
+    </button>
+  </form>
+
+  <p class="text-center small text-muted mt-3 mb-0">
+    ¿Ya tienes cuenta? <a href="/auth/login">Inicia sesión</a>
+  </p>
+</div>

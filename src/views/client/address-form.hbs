@@ -1,0 +1,35 @@
+<div class="page-header">
+  <p class="eyebrow">Dirección</p>
+  <h2>{{title}}</h2>
+</div>
+
+<div class="brand-card p-4 mx-auto" style="max-width: 560px">
+  <form action="{{formAction}}" method="POST">
+    <div class="row g-3">
+      <div class="col-12">
+        <label class="form-label">Nombre de la dirección</label>
+        <input type="text" name="label" class="form-control" value="{{address.label}}" required placeholder="Ej. Casa, Trabajo" />
+      </div>
+      <div class="col-12">
+        <label class="form-label">Calle</label>
+        <input type="text" name="street" class="form-control" value="{{address.street}}" required />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Sector</label>
+        <input type="text" name="sector" class="form-control" value="{{address.sector}}" required />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Ciudad</label>
+        <input type="text" name="city" class="form-control" value="{{address.city}}" required />
+      </div>
+      <div class="col-12">
+        <label class="form-label">Referencia</label>
+        <textarea name="reference" class="form-control" rows="2" required>{{address.reference}}</textarea>
+      </div>
+    </div>
+    <div class="d-flex gap-2 mt-4">
+      <a href="/client/addresses" class="btn btn-ghost">Volver</a>
+      <button type="submit" class="btn btn-brand"><i class="bi bi-save"></i> Guardar</button>
+    </div>
+  </form>
+</div>

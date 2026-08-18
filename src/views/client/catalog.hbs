@@ -1,0 +1,73 @@
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-2 page-header">
+  <div>
+    <p class="eyebrow">Catálogo</p>
+    <h2>{{commerce.name}}</h2>
+  </div>
+  <a href="javascript:history.back()" class="btn btn-ghost"><i class="bi bi-arrow-left"></i> Volver</a>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    {{#if catalog.length}}
+      {{#each catalog}}
+        <h5 class="mb-3">{{this.category.name}}</h5>
+        <div class="d-flex flex-column gap-2 mb-4">
+          {{#each this.products}}
+            <div class="product-row">
+              {{#if this.image}}<img src="{{this.image}}" alt="{{this.name}}" />{{else}}<div style="width:64px;height:64px;background:var(--brand-secondary-light);border-radius:10px"></div>{{/if}}
+              <div class="flex-grow-1">
+                <div class="fw-semibold">{{this.name}}</div>
+                <div class="text-muted small">{{this.description}}</div>
+                <div class="fw-bold">RD$ {{this.price}}</div>
+              </div>
+              {{#unless (includes ../../cartProductIds this._id)}}
+                <form action="/client/cart/add" method="POST">
+                  <input type="hidden" name="productId" value="{{this._id}}" />
+                  <input type="hidden" name="commerceId" value="{{../../commerce._id}}" />
+                  <button type="submit" class="btn btn-brand-outline btn-sm">
+                    <i class="bi bi-plus-lg"></i> Agregar
+                  </button>
+                </form>
+              {{else}}
+                <span class="status-pill status-completed"><i class="bi bi-check-lg"></i> En tu pedido</span>
+              {{/unless}}
+            </div>
+          {{/each}}
+        </div>
+      {{/each}}
+    {{else}}
+      <div class="empty-state">
+        <i class="bi bi-basket d-block mb-2"></i>
+        Este comercio todavía no tiene productos publicados.
+      </div>
+    {{/if}}
+  </div>
+
+  <div class="col-lg-4">
+    <div class="cart-panel">
+      <h5 class="mb-3"><i class="bi bi-basket3"></i> Mi pedido</h5>
+      {{#if cart.items.length}}
+        <div class="d-flex flex-column gap-2 mb-3">
+          {{#each cart.items}}
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <div class="small fw-semibold">{{this.name}}</div>
+                <div class="small text-muted">RD$ {{this.price}}</div>
+              </div>
+              <form action="/client/cart/{{../commerce._id}}/remove/{{this.productId}}" method="POST">
+                <button type="submit" class="btn btn-sm btn-ghost"><i class="bi bi-x-lg"></i></button>
+              </form>
+            </div>
+          {{/each}}
+        </div>
+        <hr />
+        <div class="d-flex justify-content-between fw-bold mb-3">
+          <span>Subtotal</span><span>RD$ {{subtotal}}</span>
+        </div>
+        <a href="/client/checkout" class="btn btn-brand w-100"><i class="bi bi-arrow-right-circle"></i> Continuar</a>
+      {{else}}
+        <p class="text-muted small mb-0">Aún no has agregado productos.</p>
+      {{/if}}
+    </div>
+  </div>
+</div>

@@ -1,0 +1,24 @@
+<div class="page-header">
+  <p class="eyebrow">Hola, {{currentUser.firstName}}</p>
+  <h2>¿Qué se te antoja hoy?</h2>
+</div>
+
+{{#if commerceTypes.length}}
+  <div class="row g-3">
+    {{#each commerceTypes}}
+      <div class="col-6 col-md-4 col-lg-3">
+        <a href="/client/commerces?typeId={{this._id}}" class="type-tile">
+          <div class="type-icon">
+            {{#if this.icon}}<img src="{{this.icon}}" alt="{{this.name}}" />{{else}}<i class="bi bi-shop"></i>{{/if}}
+          </div>
+          <div class="type-name">{{this.name}}</div>
+        </a>
+      </div>
+    {{/each}}
+  </div>
+{{else}}
+  <div class="empty-state">
+    <i class="bi bi-shop-window d-block mb-2"></i>
+    Todavía no hay tipos de comercio disponibles.
+  </div>
+{{/if}}

@@ -1,0 +1,32 @@
+<div class="d-flex align-items-center justify-content-between page-header">
+  <div>
+    <p class="eyebrow">Entregas</p>
+    <h2>Mis direcciones</h2>
+  </div>
+  <a href="/client/addresses/new" class="btn btn-brand"><i class="bi bi-plus-lg"></i> Nueva dirección</a>
+</div>
+
+{{#if addresses.length}}
+  <div class="row g-3">
+    {{#each addresses}}
+      <div class="col-md-6">
+        <div class="brand-card p-3 d-flex justify-content-between align-items-start gap-2">
+          <div>
+            <div class="fw-semibold">{{this.label}}</div>
+            <div class="text-muted small">{{this.street}}, {{this.sector}}, {{this.city}}</div>
+            <div class="text-muted small">{{this.reference}}</div>
+          </div>
+          <div class="d-flex gap-1">
+            <a href="/client/addresses/{{this._id}}/edit" class="btn btn-sm btn-ghost"><i class="bi bi-pencil"></i></a>
+            <a href="/client/addresses/{{this._id}}/delete" class="btn btn-sm btn-ghost text-danger"><i class="bi bi-trash"></i></a>
+          </div>
+        </div>
+      </div>
+    {{/each}}
+  </div>
+{{else}}
+  <div class="empty-state">
+    <i class="bi bi-geo-alt d-block mb-2"></i>
+    Todavía no tienes direcciones guardadas.
+  </div>
+{{/if}}

@@ -1,0 +1,46 @@
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-2 page-header">
+  <div>
+    <p class="eyebrow">{{commerceType.name}}</p>
+    <h2>Comercios disponibles</h2>
+  </div>
+  <a href="/client/home" class="btn btn-ghost"><i class="bi bi-arrow-left"></i> Volver</a>
+</div>
+
+<form method="GET" action="/client/commerces" class="d-flex gap-2 mb-3">
+  <input type="hidden" name="typeId" value="{{commerceType._id}}" />
+  <input type="text" name="search" class="form-control" placeholder="Buscar comercio por nombre..." value="{{search}}" />
+  <button type="submit" class="btn btn-brand"><i class="bi bi-search"></i></button>
+</form>
+
+<p class="text-muted mb-3">{{total}} comercio(s) encontrado(s)</p>
+
+{{#if commerces.length}}
+  <div class="row g-3">
+    {{#each commerces}}
+      <div class="col-md-6 col-lg-4">
+        <div class="commerce-card position-relative">
+          <form action="/client/commerces/{{this._id}}/favorite" method="POST" class="position-absolute top-0 end-0 m-2">
+            <button type="submit" class="favorite-toggle {{#if this.isFavorite}}is-active{{/if}}">
+              <i class="bi {{#if this.isFavorite}}bi-heart-fill{{else}}bi-heart{{/if}}"></i>
+            </button>
+          </form>
+          <a href="/client/catalog/{{this._id}}">
+            {{#if this.logo}}
+              <img src="{{this.logo}}" class="commerce-logo" alt="{{this.name}}" />
+            {{else}}
+              <div class="commerce-logo d-flex align-items-center justify-content-center"><i class="bi bi-shop fs-1 text-secondary"></i></div>
+            {{/if}}
+            <div class="p-3">
+              <h5 class="mb-0">{{this.name}}</h5>
+            </div>
+          </a>
+        </div>
+      </div>
+    {{/each}}
+  </div>
+{{else}}
+  <div class="empty-state">
+    <i class="bi bi-emoji-frown d-block mb-2"></i>
+    No hay comercios disponibles para esta búsqueda.
+  </div>
+{{/if}}

@@ -1,0 +1,27 @@
+<div class="page-header">
+  <p class="eyebrow">Preferidos</p>
+  <h2>Mis favoritos</h2>
+</div>
+
+{{#if favorites.length}}
+  <div class="row g-3">
+    {{#each favorites}}
+      <div class="col-md-6 col-lg-4">
+        <div class="commerce-card">
+          <a href="/client/catalog/{{this.commerce._id}}">
+            {{#if this.commerce.logo}}<img src="{{this.commerce.logo}}" class="commerce-logo" />{{else}}<div class="commerce-logo"></div>{{/if}}
+            <div class="p-3"><h6 class="mb-0">{{this.commerce.name}}</h6></div>
+          </a>
+          <form action="/client/favorites/{{this.commerce._id}}/remove" method="POST" class="px-3 pb-3">
+            <button type="submit" class="btn btn-ghost btn-sm w-100 text-danger"><i class="bi bi-heart-fill"></i> Quitar de favoritos</button>
+          </form>
+        </div>
+      </div>
+    {{/each}}
+  </div>
+{{else}}
+  <div class="empty-state">
+    <i class="bi bi-heart d-block mb-2"></i>
+    Aún no tienes comercios favoritos.
+  </div>
+{{/if}}

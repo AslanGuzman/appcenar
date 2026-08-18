@@ -1,0 +1,36 @@
+<div class="page-header">
+  <p class="eyebrow">Usuarios</p>
+  <h2>Deliveries</h2>
+</div>
+
+<div class="table-responsive brand-card p-2">
+  <table class="table table-brand align-middle mb-0">
+    <thead><tr><th>Nombre</th><th>Usuario</th><th>Correo</th><th>Teléfono</th><th>Pedidos entregados</th><th>Estado</th><th></th></tr></thead>
+    <tbody>
+      {{#each users}}
+        <tr>
+          <td>{{this.firstName}} {{this.lastName}}</td>
+          <td>{{this.userName}}</td>
+          <td>{{this.email}}</td>
+          <td>{{this.phone}}</td>
+          <td>{{this.orderCount}}</td>
+          <td>
+            {{#if this.isActive}}
+              <span class="status-pill status-completed">Activo</span>
+            {{else}}
+              <span class="status-pill status-pending">Inactivo</span>
+            {{/if}}
+          </td>
+          <td class="text-end">
+            <form action="/admin/users/{{this._id}}/toggle-status" method="POST">
+              <input type="hidden" name="redirectTo" value="/admin/deliveries" />
+              <button type="submit" class="btn btn-sm btn-ghost">
+                {{#if this.isActive}}<i class="bi bi-x-circle"></i> Inactivar{{else}}<i class="bi bi-check-circle"></i> Activar{{/if}}
+              </button>
+            </form>
+          </td>
+        </tr>
+      {{/each}}
+    </tbody>
+  </table>
+</div>

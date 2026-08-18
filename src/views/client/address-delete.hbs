@@ -1,0 +1,10 @@
+<div class="page-header">
+  <h2>Eliminar dirección</h2>
+</div>
+<div class="brand-card p-4 mx-auto" style="max-width: 480px">
+  <p>¿Está seguro que desea eliminar la dirección <strong>{{address.label}}</strong>?</p>
+  <form action="/client/addresses/{{address._id}}/delete" method="POST" class="d-flex gap-2">
+    <a href="/client/addresses" class="btn btn-ghost flex-fill">Cancelar</a>
+    <button type="submit" class="btn btn-brand flex-fill"><i class="bi bi-trash"></i> Aceptar</button>
+  </form>
+</div>

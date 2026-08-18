@@ -1,0 +1,8 @@
+<div class="page-header"><h2>Confirmar acción</h2></div>
+<div class="brand-card p-4 mx-auto" style="max-width: 480px">
+  <p>¿Está seguro que desea {{#if admin.isActive}}inactivar{{else}}activar{{/if}} al administrador <strong>{{admin.firstName}} {{admin.lastName}}</strong>?</p>
+  <form action="/admin/administrators/{{admin._id}}/toggle" method="POST" class="d-flex gap-2">
+    <a href="/admin/administrators" class="btn btn-ghost flex-fill">Cancelar</a>
+    <button type="submit" class="btn btn-brand flex-fill"><i class="bi bi-check2"></i> Aceptar</button>
+  </form>
+</div>

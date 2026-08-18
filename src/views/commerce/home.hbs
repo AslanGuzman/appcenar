@@ -1,0 +1,26 @@
+<div class="page-header">
+  <p class="eyebrow">Panel del comercio</p>
+  <h2>Pedidos recibidos</h2>
+</div>
+
+{{#if orders.length}}
+  <div class="d-flex flex-column gap-2">
+    {{#each orders}}
+      <a href="/commerce/orders/{{this._id}}" class="brand-card p-3 d-flex align-items-center justify-content-between text-decoration-none text-reset">
+        <div>
+          <div class="fw-semibold">Pedido #{{shortId this._id}}</div>
+          <div class="text-muted small">{{this.items.length}} producto(s) · {{formatDate this.createdAt}}</div>
+        </div>
+        <div class="text-end">
+          <div class="fw-bold">RD$ {{this.total}}</div>
+          <span class="status-pill {{statusClass this.status}}">{{statusLabel this.status}}</span>
+        </div>
+      </a>
+    {{/each}}
+  </div>
+{{else}}
+  <div class="empty-state">
+    <i class="bi bi-receipt d-block mb-2"></i>
+    Todavía no has recibido pedidos.
+  </div>
+{{/if}}

@@ -1,0 +1,27 @@
+<div class="d-flex align-items-center justify-content-between page-header">
+  <div>
+    <p class="eyebrow">Catálogo</p>
+    <h2>Tipos de comercio</h2>
+  </div>
+  <a href="/admin/commerce-types/new" class="btn btn-brand"><i class="bi bi-plus-lg"></i> Nuevo tipo</a>
+</div>
+
+<div class="row g-3">
+  {{#each types}}
+    <div class="col-md-6 col-lg-4">
+      <div class="brand-card p-3 d-flex gap-3 align-items-center">
+        <div class="type-icon" style="margin:0">
+          {{#if this.icon}}<img src="{{this.icon}}" />{{else}}<i class="bi bi-shop"></i>{{/if}}
+        </div>
+        <div class="flex-grow-1">
+          <div class="fw-semibold">{{this.name}}</div>
+          <div class="text-muted small">{{this.commerceCount}} comercio(s)</div>
+        </div>
+      </div>
+      <div class="d-flex gap-2 mt-2">
+        <a href="/admin/commerce-types/{{this._id}}/edit" class="btn btn-sm btn-ghost flex-fill"><i class="bi bi-pencil"></i> Editar</a>
+        <a href="/admin/commerce-types/{{this._id}}/delete" class="btn btn-sm btn-ghost text-danger flex-fill"><i class="bi bi-trash"></i> Eliminar</a>
+      </div>
+    </div>
+  {{/each}}
+</div>

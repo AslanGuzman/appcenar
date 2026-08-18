@@ -1,0 +1,31 @@
+<div class="d-flex align-items-center justify-content-between page-header">
+  <div>
+    <p class="eyebrow">Pedido</p>
+    <h2>{{order.commerce.name}}</h2>
+  </div>
+  <a href="/client/orders" class="btn btn-ghost"><i class="bi bi-arrow-left"></i> Volver</a>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="brand-card p-3">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <span class="status-pill {{statusClass order.status}}">{{statusLabel order.status}}</span>
+        <span class="text-muted small">{{formatDate order.createdAt}}</span>
+      </div>
+      {{#each order.items}}
+        <div class="d-flex justify-content-between border-bottom py-2">
+          <span>{{this.name}}</span><span>RD$ {{this.price}}</span>
+        </div>
+      {{/each}}
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="brand-card p-3">
+      <div class="d-flex justify-content-between small"><span>Subtotal</span><span>RD$ {{order.subtotal}}</span></div>
+      <div class="d-flex justify-content-between small"><span>ITBIS</span><span>RD$ {{order.itbisAmount}}</span></div>
+      <hr />
+      <div class="d-flex justify-content-between fw-bold fs-5"><span>Total</span><span>RD$ {{order.total}}</span></div>
+    </div>
+  </div>
+</div>

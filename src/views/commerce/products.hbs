@@ -1,0 +1,33 @@
+<div class="d-flex align-items-center justify-content-between page-header">
+  <div>
+    <p class="eyebrow">Catálogo</p>
+    <h2>Productos</h2>
+  </div>
+  <a href="/commerce/products/new" class="btn btn-brand"><i class="bi bi-plus-lg"></i> Nuevo producto</a>
+</div>
+
+{{#if products.length}}
+  <div class="row g-3">
+    {{#each products}}
+      <div class="col-md-6 col-lg-4">
+        <div class="brand-card p-3 d-flex gap-3">
+          {{#if this.image}}<img src="{{this.image}}" style="width:64px;height:64px;object-fit:cover;border-radius:10px" />{{/if}}
+          <div class="flex-grow-1">
+            <div class="fw-semibold">{{this.name}}</div>
+            <div class="text-muted small">{{this.category.name}}</div>
+            <div class="fw-bold">RD$ {{this.price}}</div>
+          </div>
+        </div>
+        <div class="d-flex gap-2 mt-2">
+          <a href="/commerce/products/{{this._id}}/edit" class="btn btn-sm btn-ghost flex-fill"><i class="bi bi-pencil"></i> Editar</a>
+          <a href="/commerce/products/{{this._id}}/delete" class="btn btn-sm btn-ghost text-danger flex-fill"><i class="bi bi-trash"></i> Eliminar</a>
+        </div>
+      </div>
+    {{/each}}
+  </div>
+{{else}}
+  <div class="empty-state">
+    <i class="bi bi-box-seam d-block mb-2"></i>
+    Aún no has creado productos.
+  </div>
+{{/if}}

@@ -1,0 +1,33 @@
+<div class="d-flex align-items-center justify-content-between page-header">
+  <div>
+    <p class="eyebrow">Catálogo</p>
+    <h2>Categorías</h2>
+  </div>
+  <a href="/commerce/categories/new" class="btn btn-brand"><i class="bi bi-plus-lg"></i> Nueva categoría</a>
+</div>
+
+{{#if categories.length}}
+  <div class="table-responsive brand-card p-2">
+    <table class="table table-brand align-middle mb-0">
+      <thead><tr><th>Nombre</th><th>Descripción</th><th>Productos</th><th></th></tr></thead>
+      <tbody>
+        {{#each categories}}
+          <tr>
+            <td class="fw-semibold">{{this.name}}</td>
+            <td class="text-muted">{{this.description}}</td>
+            <td>{{this.productCount}}</td>
+            <td class="text-end">
+              <a href="/commerce/categories/{{this._id}}/edit" class="btn btn-sm btn-ghost"><i class="bi bi-pencil"></i></a>
+              <a href="/commerce/categories/{{this._id}}/delete" class="btn btn-sm btn-ghost text-danger"><i class="bi bi-trash"></i></a>
+            </td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+{{else}}
+  <div class="empty-state">
+    <i class="bi bi-tags d-block mb-2"></i>
+    Aún no has creado categorías.
+  </div>
+{{/if}}
