@@ -1,0 +1,13 @@
+node_modules
+docs
+.git
+.env
+.env.qa
+.env.production
+.env.example
+.env.qa.example
+public/uploads/*
+!public/uploads/.gitkeep
+npm-debug.log*
+*.log
+coverage

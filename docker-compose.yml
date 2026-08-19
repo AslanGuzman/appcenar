@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   mongo:
     image: mongo:7
@@ -15,6 +13,25 @@ services:
       timeout: 5s
       retries: 10
       start_period: 10s
+
+  app:
+    build: .
+    container_name: appcenar-app
+    restart: unless-stopped
+    profiles: ["full"]
+    depends_on:
+      mongo:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: development
+      PORT: 8080
+      MONGO_URI: mongodb://mongo:27017/appcenar_dev
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./public/uploads:/app/public/uploads
 
 volumes:
   mongo-data:
