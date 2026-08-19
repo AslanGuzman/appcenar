@@ -316,7 +316,7 @@ export async function forgotPassword(req, res, next) {
     user.resetTokenExpiration = expiration;
     await user.save();
 
-    const resetUrl = `${process.env.APP_URL}/reset-password?token=${token}`;
+    const resetUrl = `${process.env.APP_URL}/auth/reset-password?token=${token}`;
     sendEmail({
       to: user.email,
       subject: "Restablece tu contraseña en ApiCenar",

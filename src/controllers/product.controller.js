@@ -93,7 +93,7 @@ export async function updateProduct(req, res, next) {
 
     if (name) product.name = name;
     if (description) product.description = description;
-    if (price) product.price = Number(price);
+    if (price !== undefined) product.price = Number(price);
     if (req.file) product.image = `/uploads/${req.file.filename}`;
 
     await product.save();

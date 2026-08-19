@@ -23,7 +23,12 @@ export async function createOrder(req, res, next) {
       return fail(res, { statusCode: 400, message: "La dirección indicada no pertenece a tu cuenta." });
     }
 
-    const productIds = items.map((item) => item.productId);
+    const quantityByProductId = items.reduce((acc, item) => {
+      acc.set(item.productId, (acc.get(item.productId) || 0) + Number(item.quantity));
+      return acc;
+    }, new Map());
+
+    const productIds = [...quantityByProductId.keys()];
     const products = await Product.find({ _id: { $in: productIds }, isActive: true });
 
     if (products.length !== productIds.length) {
@@ -35,15 +40,13 @@ export async function createOrder(req, res, next) {
       return fail(res, { statusCode: 400, message: "Todos los productos del pedido deben pertenecer al mismo comercio." });
     }
 
-    const orderItems = items.map((item) => {
-      const product = products.find((p) => p._id.toString() === item.productId);
-      return {
-        product: product._id,
-        name: product.name,
-        price: product.price,
-        quantity: item.quantity,
-      };
-    });
+    const orderItems = products.map((product) => ({
+      product: product._id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+      quantity: quantityByProductId.get(product._id.toString()),
+    }));
 
     const subtotal = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const itbisPercentage = await getItbisPercentage();
@@ -124,13 +127,13 @@ export async function getCommerceOrders(req, res, next) {
   try {
     const commerceId = await getCommerceIdFromUser(req.user.id);
     const { status } = req.query;
-    const { page, pageSize, skip } = buildPagination(req.query, { defaultSortBy: "createdAt", defaultSortDirection: "desc" });
+    const { page, pageSize, skip, sort } = buildPagination(req.query, { defaultSortBy: "createdAt", defaultSortDirection: "desc" });
 
     const filter = { commerce: commerceId };
     if (status) filter.status = status;
 
     const [orders, total] = await Promise.all([
-      Order.find(filter).sort({ createdAt: -1 }).skip(skip).limit(pageSize).populate("commerce", "name logo"),
+      Order.find(filter).sort(sort).skip(skip).limit(pageSize).populate("commerce", "name logo"),
       Order.countDocuments(filter),
     ]);
 
@@ -202,13 +205,13 @@ export async function assignDelivery(req, res, next) {
 export async function getDeliveryOrders(req, res, next) {
   try {
     const { status } = req.query;
-    const { page, pageSize, skip } = buildPagination(req.query, { defaultSortBy: "createdAt", defaultSortDirection: "desc" });
+    const { page, pageSize, skip, sort } = buildPagination(req.query, { defaultSortBy: "createdAt", defaultSortDirection: "desc" });
 
     const filter = { delivery: req.user.id };
     if (status) filter.status = status;
 
     const [orders, total] = await Promise.all([
-      Order.find(filter).sort({ createdAt: -1 }).skip(skip).limit(pageSize).populate("commerce", "name logo"),
+      Order.find(filter).sort(sort).skip(skip).limit(pageSize).populate("commerce", "name logo"),
       Order.countDocuments(filter),
     ]);
 

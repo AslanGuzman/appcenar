@@ -84,10 +84,11 @@ export async function getCommerces(req, res, next) {
 
 export async function getAdministrators(req, res, next) {
   try {
-    const { search } = req.query;
+    const { search, isActive } = req.query;
     const { page, pageSize, skip, sort } = buildPagination(req.query);
 
     const filter = { role: ROLES.ADMIN };
+    if (isActive !== undefined) filter.isActive = isActive === "true";
     if (search) {
       filter.$or = [
         { firstName: { $regex: search, $options: "i" } },

@@ -7,7 +7,6 @@ import { User } from "../models/User.js";
 import { success, fail } from "../utils/apiResponse.js";
 import { buildPagination, buildPaginatedResponse } from "../utils/pagination.js";
 
-// GET /api/commerce-types  (para el cliente, solo tipos con al menos un comercio activo)
 export async function getActiveCommerceTypes(req, res, next) {
   try {
     const { search } = req.query;
