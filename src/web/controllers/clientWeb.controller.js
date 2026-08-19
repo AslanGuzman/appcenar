@@ -8,6 +8,7 @@ import { Order } from "../../models/Order.js";
 import { User } from "../../models/User.js";
 import { Configuration } from "../../models/Configuration.js";
 import { ORDER_STATUS } from "../../utils/constants.js";
+import { popFormData } from "../utils/formData.js";
 
 /* ---------------------------- Home (público) ---------------------------- */
 
@@ -233,7 +234,7 @@ export async function placeOrder(req, res) {
 
 export async function showProfile(req, res) {
   const user = await User.findById(req.session.user.id).lean();
-  res.render("client/profile", { title: "Mi perfil", profile: user });
+  res.render("client/profile", { title: "Mi perfil", profile: { ...user, ...popFormData(req) } });
 }
 
 export async function updateProfile(req, res) {
@@ -275,7 +276,11 @@ export async function listAddresses(req, res) {
 }
 
 export function showNewAddress(req, res) {
-  res.render("client/address-form", { title: "Nueva dirección", address: {}, formAction: "/client/addresses" });
+  res.render("client/address-form", {
+    title: "Nueva dirección",
+    address: popFormData(req),
+    formAction: "/client/addresses",
+  });
 }
 
 export async function createAddress(req, res) {
@@ -291,7 +296,11 @@ export async function showEditAddress(req, res) {
     req.flash("errors", "Dirección no encontrada.");
     return res.redirect("/client/addresses");
   }
-  res.render("client/address-form", { title: "Editar dirección", address, formAction: `/client/addresses/${address._id}` });
+  res.render("client/address-form", {
+    title: "Editar dirección",
+    address: { ...address, ...popFormData(req) },
+    formAction: `/client/addresses/${address._id}`,
+  });
 }
 
 export async function updateAddress(req, res) {

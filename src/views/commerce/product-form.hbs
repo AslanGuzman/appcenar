@@ -24,7 +24,7 @@
       </div>
       <div class="col-12">
         <label class="form-label">Imagen</label>
-        <input type="file" name="image" class="form-control" accept="image/*" />
+        <input type="file" name="image" class="form-control" accept="image/*" {{#unless product._id}}required{{/unless}} />
         {{#if product.image}}<img src="{{product.image}}" class="mt-2" style="width:64px;height:64px;object-fit:cover;border-radius:10px" />{{/if}}
       </div>
     </div>

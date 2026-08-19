@@ -8,6 +8,7 @@ import { Order } from "../../models/Order.js";
 import { Favorite } from "../../models/Favorite.js";
 import { Configuration } from "../../models/Configuration.js";
 import { ROLES, ORDER_STATUS } from "../../utils/constants.js";
+import { popFormData } from "../utils/formData.js";
 
 const SALT_ROUNDS = 10;
 
@@ -134,18 +135,16 @@ export async function toggleUserStatus(req, res) {
 
 export async function showConfiguration(req, res) {
   const configuration = await Configuration.findOne({ key: "ITBIS" }).lean();
-  res.render("admin/configuration", { title: "Configuración", configuration });
+  res.render("admin/configuration", {
+    title: "Configuración",
+    configuration: { ...configuration, ...popFormData(req) },
+  });
 }
 
 export async function updateConfiguration(req, res) {
   const configuration = await Configuration.findOne({ key: "ITBIS" });
   if (!configuration) {
     req.flash("errors", "La configuración no existe.");
-    return res.redirect("/admin/configuration");
-  }
-
-  if (Number.isNaN(Number(req.body.value))) {
-    req.flash("errors", "El valor debe ser numérico.");
     return res.redirect("/admin/configuration");
   }
 
@@ -164,16 +163,15 @@ export async function listAdministrators(req, res) {
 }
 
 export function showNewAdministrator(req, res) {
-  res.render("admin/administrator-form", { title: "Nuevo administrador", admin: {}, formAction: "/admin/administrators" });
+  res.render("admin/administrator-form", {
+    title: "Nuevo administrador",
+    admin: popFormData(req),
+    formAction: "/admin/administrators",
+  });
 }
 
 export async function createAdministrator(req, res) {
-  const { firstName, lastName, userName, email, password, confirmPassword, phone } = req.body;
-
-  if (password !== confirmPassword) {
-    req.flash("errors", "La contraseña y la confirmación no coinciden.");
-    return res.redirect("/admin/administrators/new");
-  }
+  const { firstName, lastName, userName, email, password, phone } = req.body;
 
   const existing = await User.findOne({ $or: [{ userName }, { email: email.toLowerCase() }] });
   if (existing) {
@@ -213,7 +211,7 @@ export async function showEditAdministrator(req, res) {
 
   res.render("admin/administrator-form", {
     title: "Editar administrador",
-    admin,
+    admin: { ...admin, ...popFormData(req) },
     formAction: `/admin/administrators/${admin._id}`,
   });
 }
@@ -261,7 +259,11 @@ export async function listCommerceTypes(req, res) {
 }
 
 export function showNewCommerceType(req, res) {
-  res.render("admin/commerce-type-form", { title: "Nuevo tipo de comercio", commerceType: {}, formAction: "/admin/commerce-types" });
+  res.render("admin/commerce-type-form", {
+    title: "Nuevo tipo de comercio",
+    commerceType: popFormData(req),
+    formAction: "/admin/commerce-types",
+  });
 }
 
 export async function createCommerceType(req, res) {
@@ -273,12 +275,7 @@ export async function createCommerceType(req, res) {
     return res.redirect("/admin/commerce-types/new");
   }
 
-  if (!req.file) {
-    req.flash("errors", "El ícono es requerido.");
-    return res.redirect("/admin/commerce-types/new");
-  }
-
-  await CommerceType.create({ name, description: description || "", icon: `/uploads/${req.file.filename}` });
+  await CommerceType.create({ name, description, icon: `/uploads/${req.file.filename}` });
   req.flash("success", "Tipo de comercio creado correctamente.");
   return res.redirect("/admin/commerce-types");
 }
@@ -291,7 +288,7 @@ export async function showEditCommerceType(req, res) {
   }
   res.render("admin/commerce-type-form", {
     title: "Editar tipo de comercio",
-    commerceType,
+    commerceType: { ...commerceType, ...popFormData(req) },
     formAction: `/admin/commerce-types/${commerceType._id}`,
   });
 }
@@ -304,7 +301,7 @@ export async function updateCommerceType(req, res) {
   }
 
   commerceType.name = req.body.name;
-  commerceType.description = req.body.description || "";
+  commerceType.description = req.body.description;
   if (req.file) commerceType.icon = `/uploads/${req.file.filename}`;
   await commerceType.save();
 

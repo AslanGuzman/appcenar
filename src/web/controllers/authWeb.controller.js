@@ -7,26 +7,9 @@ import { generateRandomToken } from "../../services/token.service.js";
 import { sendEmail } from "../../services/email.service.js";
 import { buildActivationEmail, buildResetPasswordEmail } from "../../services/email.templates.js";
 import { getRoleHome } from "../middlewares/webAuth.middleware.js";
+import { flashFormData, popFormData } from "../utils/formData.js";
 
 const SALT_ROUNDS = 10;
-
-// Guarda los datos ya escritos en un formulario (sin contraseñas) para que,
-// si la validación falla, el usuario no tenga que volver a llenarlo todo.
-function flashFormData(req, data) {
-  req.flash("formData", JSON.stringify(data));
-}
-
-function popFormData(req) {
-  const raw = req.flash("formData");
-  if (!raw || !raw.length) return {};
-  try {
-    return JSON.parse(raw[0]);
-  } catch {
-    return {};
-  }
-}
-
-/* ---------------------------- Login ---------------------------- */
 
 export function showLogin(req, res) {
   res.render("auth/login", { title: "Iniciar sesión", layout: "auth", formData: popFormData(req) });
@@ -35,24 +18,18 @@ export function showLogin(req, res) {
 export async function login(req, res) {
   const { userNameOrEmail, password } = req.body;
 
-  if (!userNameOrEmail || !password) {
-    flashFormData(req, { userNameOrEmail });
-    req.flash("errors", "Usuario/correo y contraseña son requeridos.");
-    return res.redirect("/auth/login");
-  }
-
   const user = await User.findOne({
     $or: [{ userName: userNameOrEmail }, { email: userNameOrEmail.toLowerCase() }],
   });
 
   if (!user || !(await bcrypt.compare(password, user.password))) {
-    flashFormData(req, { userNameOrEmail });
+    flashFormData(req);
     req.flash("errors", "Usuario o contraseña incorrectos.");
     return res.redirect("/auth/login");
   }
 
   if (!user.isActive) {
-    flashFormData(req, { userNameOrEmail });
+    flashFormData(req);
     req.flash("errors", "Tu cuenta está inactiva. Revisa tu correo o contacta a un administrador.");
     return res.redirect("/auth/login");
   }
@@ -65,7 +42,6 @@ export async function login(req, res) {
     role: user.role,
   };
 
-  // Si venía de una página protegida (ej. checkout), lo regresamos ahí.
   const returnTo = req.session.returnTo;
   delete req.session.returnTo;
 
@@ -79,8 +55,6 @@ export async function login(req, res) {
 export function logout(req, res) {
   req.session.destroy(() => res.redirect("/auth/login"));
 }
-
-/* ------------------------- Registro Client/Delivery ------------------------- */
 
 export function showRegister(req, res) {
   res.render("auth/register-user", { title: "Crear cuenta", layout: "auth", formData: popFormData(req) });
@@ -101,64 +75,38 @@ async function sendActivationEmail(user) {
   }).catch((err) => console.error("[auth] Error enviando correo de activación:", err.message));
 }
 
-export async function register(req, res) {
-  const { firstName, lastName, userName, email, password, confirmPassword, phone, role } = req.body;
-  const keepData = { firstName, lastName, userName, email, phone, role };
-
-  try {
-    if (!firstName || !lastName || !userName || !email || !password || !phone || !role) {
-      flashFormData(req, keepData);
-      req.flash("errors", "Todos los campos son requeridos.");
-      return res.redirect("/auth/register");
-    }
-
-    if (password !== confirmPassword) {
-      flashFormData(req, keepData);
-      req.flash("errors", "La contraseña y la confirmación no coinciden.");
-      return res.redirect("/auth/register");
-    }
-
-    if (![ROLES.CLIENT, ROLES.DELIVERY].includes(role)) {
-      flashFormData(req, keepData);
-      req.flash("errors", "Rol inválido.");
-      return res.redirect("/auth/register");
-    }
-
-    const existing = await User.findOne({ $or: [{ userName }, { email: email.toLowerCase() }] });
-    if (existing) {
-      flashFormData(req, keepData);
-      req.flash("errors", "El nombre de usuario o el correo ya están en uso.");
-      return res.redirect("/auth/register");
-    }
-
-    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-
-    const user = await User.create({
-      firstName,
-      lastName,
-      userName,
-      email: email.toLowerCase(),
-      password: hashedPassword,
-      phone,
-      profileImage: req.file ? `/uploads/${req.file.filename}` : null,
-      role,
-      isActive: false,
-      isAvailable: role === ROLES.DELIVERY ? true : undefined,
-    });
-
-    await sendActivationEmail(user);
-
-    req.flash("success", "Cuenta creada. Revisa tu correo para activarla antes de iniciar sesión.");
-    return res.redirect("/auth/login");
-  } catch (err) {
-    console.error("[auth] Error al registrar usuario:", err.message);
-    flashFormData(req, keepData);
-    req.flash("errors", "Ocurrió un error al registrar tu cuenta.");
-    return res.redirect("/auth/register");
-  }
+async function isUserNameOrEmailTaken({ userName, email }) {
+  const existing = await User.findOne({ $or: [{ userName }, { email: email.toLowerCase() }] });
+  return Boolean(existing);
 }
 
-/* ------------------------- Registro Commerce ------------------------- */
+export async function register(req, res) {
+  const { firstName, lastName, userName, email, password, phone, role } = req.body;
+
+  if (await isUserNameOrEmailTaken({ userName, email })) {
+    flashFormData(req);
+    req.flash("errors", "El nombre de usuario o el correo ya están en uso.");
+    return res.redirect("/auth/register");
+  }
+
+  const user = await User.create({
+    firstName,
+    lastName,
+    userName,
+    email: email.toLowerCase(),
+    password: await bcrypt.hash(password, SALT_ROUNDS),
+    phone,
+    profileImage: req.file ? `/uploads/${req.file.filename}` : null,
+    role,
+    isActive: false,
+    isAvailable: role === ROLES.DELIVERY ? true : undefined,
+  });
+
+  await sendActivationEmail(user);
+
+  req.flash("success", "Cuenta creada. Revisa tu correo para activarla antes de iniciar sesión.");
+  return res.redirect("/auth/login");
+}
 
 export async function showRegisterCommerce(req, res) {
   const commerceTypes = await CommerceType.find().sort({ name: 1 }).lean();
@@ -171,89 +119,50 @@ export async function showRegisterCommerce(req, res) {
 }
 
 export async function registerCommerce(req, res) {
-  const {
+  const { userName, email, password, name, description, phone, openingTime, closingTime, commerceTypeId } = req.body;
+
+  if (await isUserNameOrEmailTaken({ userName, email })) {
+    flashFormData(req);
+    req.flash("errors", "El nombre de usuario o el correo ya están en uso.");
+    return res.redirect("/auth/register-commerce");
+  }
+
+  const commerceType = await CommerceType.findById(commerceTypeId);
+  if (!commerceType) {
+    flashFormData(req);
+    req.flash("errors", "El tipo de comercio seleccionado no existe.");
+    return res.redirect("/auth/register-commerce");
+  }
+
+  const user = await User.create({
+    firstName: name,
     userName,
-    email,
-    password,
-    confirmPassword,
+    email: email.toLowerCase(),
+    password: await bcrypt.hash(password, SALT_ROUNDS),
+    phone,
+    role: ROLES.COMMERCE,
+    isActive: false,
+  });
+
+  await Commerce.create({
+    user: user._id,
     name,
-    description,
+    description: description || "",
     phone,
     openingTime,
     closingTime,
-    commerceTypeId,
-  } = req.body;
-  const keepData = { userName, email, name, description, phone, openingTime, closingTime, commerceTypeId };
+    commerceType: commerceType._id,
+    logo: req.file ? `/uploads/${req.file.filename}` : null,
+  });
 
-  try {
-    if (!userName || !email || !password || !name || !phone || !openingTime || !closingTime || !commerceTypeId) {
-      flashFormData(req, keepData);
-      req.flash("errors", "Todos los campos son requeridos.");
-      return res.redirect("/auth/register-commerce");
-    }
+  await sendActivationEmail(user);
 
-    if (password !== confirmPassword) {
-      flashFormData(req, keepData);
-      req.flash("errors", "La contraseña y la confirmación no coinciden.");
-      return res.redirect("/auth/register-commerce");
-    }
-
-    const existing = await User.findOne({ $or: [{ userName }, { email: email.toLowerCase() }] });
-    if (existing) {
-      flashFormData(req, keepData);
-      req.flash("errors", "El nombre de usuario o el correo ya están en uso.");
-      return res.redirect("/auth/register-commerce");
-    }
-
-    const commerceType = await CommerceType.findById(commerceTypeId);
-    if (!commerceType) {
-      flashFormData(req, keepData);
-      req.flash("errors", "El tipo de comercio seleccionado no existe.");
-      return res.redirect("/auth/register-commerce");
-    }
-
-    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-
-    const user = await User.create({
-      firstName: name,
-      lastName: "",
-      userName,
-      email: email.toLowerCase(),
-      password: hashedPassword,
-      phone,
-      role: ROLES.COMMERCE,
-      isActive: false,
-    });
-
-    await Commerce.create({
-      user: user._id,
-      name,
-      description: description || "",
-      phone,
-      openingTime,
-      closingTime,
-      commerceType: commerceType._id,
-      logo: req.file ? `/uploads/${req.file.filename}` : null,
-    });
-
-    await sendActivationEmail(user);
-
-    req.flash("success", "Comercio registrado. Revisa tu correo para activar la cuenta.");
-    return res.redirect("/auth/login");
-  } catch (err) {
-    console.error("[auth] Error al registrar comercio:", err.message);
-    flashFormData(req, keepData);
-    req.flash("errors", "Ocurrió un error al registrar el comercio.");
-    return res.redirect("/auth/register-commerce");
-  }
+  req.flash("success", "Comercio registrado. Revisa tu correo para activar la cuenta.");
+  return res.redirect("/auth/login");
 }
 
-/* ------------------------- Activación ------------------------- */
-
 export async function activateAccount(req, res) {
-  const { token } = req.params;
-
-  const user = await User.findOne({ activateToken: token });
+  const user = await User.findOne({ activateToken: req.params.token });
 
   if (!user || user.activateTokenExpiration < new Date()) {
     req.flash("errors", "El enlace de activación es inválido o ha expirado.");
@@ -269,8 +178,6 @@ export async function activateAccount(req, res) {
   return res.redirect("/auth/login");
 }
 
-/* ------------------------- Forgot / Reset password ------------------------- */
-
 export function showForgotPassword(req, res) {
   res.render("auth/forgot-password", { title: "Recuperar contraseña", layout: "auth", formData: popFormData(req) });
 }
@@ -279,7 +186,7 @@ export async function forgotPassword(req, res) {
   const { userNameOrEmail } = req.body;
 
   const user = await User.findOne({
-    $or: [{ userName: userNameOrEmail }, { email: (userNameOrEmail || "").toLowerCase() }],
+    $or: [{ userName: userNameOrEmail }, { email: userNameOrEmail.toLowerCase() }],
   });
 
   if (user) {
@@ -300,7 +207,7 @@ export async function forgotPassword(req, res) {
   return res.redirect("/auth/login");
 }
 
-export async function showResetPassword(req, res) {
+export function showResetPassword(req, res) {
   const { token } = req.query;
 
   if (!token) {
@@ -312,12 +219,7 @@ export async function showResetPassword(req, res) {
 }
 
 export async function resetPassword(req, res) {
-  const { token, password, confirmPassword } = req.body;
-
-  if (password !== confirmPassword) {
-    req.flash("errors", "La contraseña y la confirmación no coinciden.");
-    return res.redirect(`/auth/reset-password?token=${token}`);
-  }
+  const { token, password } = req.body;
 
   const user = await User.findOne({ resetToken: token });
 

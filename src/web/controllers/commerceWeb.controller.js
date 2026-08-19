@@ -4,9 +4,15 @@ import { Product } from "../../models/Product.js";
 import { Order } from "../../models/Order.js";
 import { User } from "../../models/User.js";
 import { ROLES, ORDER_STATUS } from "../../utils/constants.js";
+import { popFormData } from "../utils/formData.js";
 
 async function getCommerce(userId) {
   return Commerce.findOne({ user: userId });
+}
+
+function toProductForm(req, product = {}) {
+  const { categoryId, ...rest } = popFormData(req);
+  return { ...product, ...rest, ...(categoryId && { category: categoryId }) };
 }
 
 /* ---------------------------- Home / Pedidos ---------------------------- */
@@ -67,7 +73,12 @@ export async function assignDelivery(req, res) {
 export async function showProfile(req, res) {
   const commerce = await Commerce.findOne({ user: req.session.user.id }).lean();
   const user = await User.findById(req.session.user.id).lean();
-  res.render("commerce/profile", { title: "Mi perfil", commerce, user });
+  const formData = popFormData(req);
+  res.render("commerce/profile", {
+    title: "Mi perfil",
+    commerce: { ...commerce, ...formData },
+    user: { ...user, ...formData },
+  });
 }
 
 export async function updateProfile(req, res) {
@@ -102,7 +113,11 @@ export async function listCategories(req, res) {
 }
 
 export function showNewCategory(req, res) {
-  res.render("commerce/category-form", { title: "Nueva categoría", category: {}, formAction: "/commerce/categories" });
+  res.render("commerce/category-form", {
+    title: "Nueva categoría",
+    category: popFormData(req),
+    formAction: "/commerce/categories",
+  });
 }
 
 export async function createCategory(req, res) {
@@ -120,7 +135,11 @@ export async function showEditCategory(req, res) {
     req.flash("errors", "Categoría no encontrada.");
     return res.redirect("/commerce/categories");
   }
-  res.render("commerce/category-form", { title: "Editar categoría", category, formAction: `/commerce/categories/${category._id}` });
+  res.render("commerce/category-form", {
+    title: "Editar categoría",
+    category: { ...category, ...popFormData(req) },
+    formAction: `/commerce/categories/${category._id}`,
+  });
 }
 
 export async function updateCategory(req, res) {
@@ -177,7 +196,7 @@ export async function showNewProduct(req, res) {
 
   res.render("commerce/product-form", {
     title: "Nuevo producto",
-    product: {},
+    product: toProductForm(req),
     categories,
     formAction: "/commerce/products",
   });
@@ -220,7 +239,7 @@ export async function showEditProduct(req, res) {
 
   res.render("commerce/product-form", {
     title: "Editar producto",
-    product,
+    product: toProductForm(req, product),
     categories,
     formAction: `/commerce/products/${product._id}`,
   });

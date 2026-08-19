@@ -1,6 +1,7 @@
 import { Order } from "../../models/Order.js";
 import { User } from "../../models/User.js";
 import { ORDER_STATUS } from "../../utils/constants.js";
+import { popFormData } from "../utils/formData.js";
 
 export async function home(req, res) {
   const orders = await Order.find({ delivery: req.session.user.id })
@@ -52,7 +53,7 @@ export async function completeOrder(req, res) {
 
 export async function showProfile(req, res) {
   const user = await User.findById(req.session.user.id).lean();
-  res.render("delivery/profile", { title: "Mi perfil", profile: user });
+  res.render("delivery/profile", { title: "Mi perfil", profile: { ...user, ...popFormData(req) } });
 }
 
 export async function updateProfile(req, res) {

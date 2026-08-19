@@ -1,8 +1,10 @@
 import { Router } from "express";
 import { upload } from "../../middlewares/upload.middleware.js";
 import { requireAuth, requireRole } from "../middlewares/webAuth.middleware.js";
+import { runWebValidation } from "../middlewares/webValidate.middleware.js";
 import { ROLES } from "../../utils/constants.js";
 import { wrapControllers } from "../utils/wrapControllers.js";
+import { webUserProfileValidator } from "../../validators/web/profile.validator.js";
 import * as rawDeliveryController from "../controllers/deliveryWeb.controller.js";
 
 const deliveryController = wrapControllers(rawDeliveryController);
@@ -16,6 +18,12 @@ router.get("/orders/:id", deliveryController.showOrderDetail);
 router.post("/orders/:id/complete", deliveryController.completeOrder);
 
 router.get("/profile", deliveryController.showProfile);
-router.post("/profile", upload.single("profileImage"), deliveryController.updateProfile);
+router.post(
+  "/profile",
+  upload.single("profileImage"),
+  webUserProfileValidator,
+  runWebValidation("/delivery/profile"),
+  deliveryController.updateProfile
+);
 
 export default router;
