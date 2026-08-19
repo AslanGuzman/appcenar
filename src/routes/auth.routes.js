@@ -25,13 +25,6 @@ const router = Router();
 
 /**
  * @swagger
- * tags:
- *   name: Auth
- *   description: Autenticación, registro y recuperación de cuenta
- */
-
-/**
- * @swagger
  * /api/auth/login:
  *   post:
  *     summary: Iniciar sesión con userName o email y password

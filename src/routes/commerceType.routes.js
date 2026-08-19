@@ -21,19 +21,21 @@ router.use(verifyToken, authorize(ROLES.ADMIN));
 
 /**
  * @swagger
- * tags:
- *   name: Commerce Types (Admin)
- *   description: Mantenimiento de tipos de comercio
- */
-
-/**
- * @swagger
  * /api/admin/commerce-types:
  *   get:
  *     summary: Listar tipos de comercio
- *     tags: [Commerce Types (Admin)]
+ *     description: Cada tipo incluye commerceCount con la cantidad de comercios asociados.
+ *     tags: [Commerce Types]
+ *     parameters:
+ *       - $ref: '#/components/parameters/Page'
+ *       - $ref: '#/components/parameters/PageSize'
+ *       - $ref: '#/components/parameters/Search'
+ *       - $ref: '#/components/parameters/SortBy'
+ *       - $ref: '#/components/parameters/SortDirection'
  *     responses:
  *       200: { description: OK }
+ *       401: { $ref: '#/components/responses/Unauthorized' }
+ *       403: { $ref: '#/components/responses/Forbidden' }
  */
 router.get("/", listCommerceTypes);
 
@@ -42,10 +44,15 @@ router.get("/", listCommerceTypes);
  * /api/admin/commerce-types/{id}:
  *   get:
  *     summary: Obtener tipo de comercio por id
- *     tags: [Commerce Types (Admin)]
+ *     tags: [Commerce Types]
+ *     parameters:
+ *       - $ref: '#/components/parameters/Id'
  *     responses:
  *       200: { description: OK }
- *       404: { description: No encontrado }
+ *       400: { $ref: '#/components/responses/BadRequest' }
+ *       401: { $ref: '#/components/responses/Unauthorized' }
+ *       403: { $ref: '#/components/responses/Forbidden' }
+ *       404: { $ref: '#/components/responses/NotFound' }
  */
 router.get("/:id", getCommerceTypeById);
 
@@ -54,7 +61,37 @@ router.get("/:id", getCommerceTypeById);
  * /api/admin/commerce-types:
  *   post:
  *     summary: Crear tipo de comercio
- *     tags: [Commerce Types (Admin)]
+ *     description: El nombre y el icono son requeridos. El icono se envia en el mismo endpoint.
+ *     tags: [Commerce Types]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [name, icon]
+ *             properties:
+ *               name: { type: string, example: "Restaurantes" }
+ *               description: { type: string, example: "Comida preparada a domicilio" }
+ *               icon: { type: string, format: binary }
+ *     responses:
+ *       201: { description: Creado }
+ *       400: { $ref: '#/components/responses/BadRequest' }
+ *       401: { $ref: '#/components/responses/Unauthorized' }
+ *       403: { $ref: '#/components/responses/Forbidden' }
+ *       409: { description: Ya existe un tipo con ese nombre }
+ */
+router.post("/", upload.single("icon"), createCommerceTypeValidator, runValidation, createCommerceType);
+
+/**
+ * @swagger
+ * /api/admin/commerce-types/{id}:
+ *   put:
+ *     summary: Actualizar tipo de comercio
+ *     description: El icono es opcional al editar; si no se envia, se conserva el actual.
+ *     tags: [Commerce Types]
+ *     parameters:
+ *       - $ref: '#/components/parameters/Id'
  *     requestBody:
  *       content:
  *         multipart/form-data:
@@ -65,18 +102,12 @@ router.get("/:id", getCommerceTypeById);
  *               description: { type: string }
  *               icon: { type: string, format: binary }
  *     responses:
- *       201: { description: Creado }
- */
-router.post("/", upload.single("icon"), createCommerceTypeValidator, runValidation, createCommerceType);
-
-/**
- * @swagger
- * /api/admin/commerce-types/{id}:
- *   put:
- *     summary: Actualizar tipo de comercio
- *     tags: [Commerce Types (Admin)]
- *     responses:
  *       200: { description: Actualizado }
+ *       400: { $ref: '#/components/responses/BadRequest' }
+ *       401: { $ref: '#/components/responses/Unauthorized' }
+ *       403: { $ref: '#/components/responses/Forbidden' }
+ *       404: { $ref: '#/components/responses/NotFound' }
+ *       409: { description: Ya existe un tipo con ese nombre }
  */
 router.put("/:id", upload.single("icon"), updateCommerceTypeValidator, runValidation, updateCommerceType);
 
@@ -84,10 +115,18 @@ router.put("/:id", upload.single("icon"), updateCommerceTypeValidator, runValida
  * @swagger
  * /api/admin/commerce-types/{id}:
  *   delete:
- *     summary: Eliminar tipo de comercio (hard delete en cascada)
- *     tags: [Commerce Types (Admin)]
+ *     summary: Eliminar tipo de comercio en cascada
+ *     description: >
+ *       Eliminacion fisica en cascada: borra el tipo, sus comercios y los usuarios de esos comercios,
+ *       junto con sus categorias, productos, pedidos y favoritos asociados.
+ *     tags: [Commerce Types]
+ *     parameters:
+ *       - $ref: '#/components/parameters/Id'
  *     responses:
  *       200: { description: Eliminado }
+ *       401: { $ref: '#/components/responses/Unauthorized' }
+ *       403: { $ref: '#/components/responses/Forbidden' }
+ *       404: { $ref: '#/components/responses/NotFound' }
  */
 router.delete("/:id", deleteCommerceType);
 

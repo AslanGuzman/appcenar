@@ -17,9 +17,17 @@ router.use(verifyToken, authorize(ROLES.CLIENT));
 
 /**
  * @swagger
- * tags:
- *   name: Addresses
- *   description: Direcciones del cliente
+ * components:
+ *   schemas:
+ *     AddressInput:
+ *       type: object
+ *       required: [label, street, sector, city, reference]
+ *       properties:
+ *         label: { type: string, example: "Casa" }
+ *         street: { type: string, example: "Calle 27 #10" }
+ *         sector: { type: string, example: "Mirador Norte" }
+ *         city: { type: string, example: "Santo Domingo" }
+ *         reference: { type: string, example: "Apt 3B" }
  */
 
 /**
@@ -27,9 +35,17 @@ router.use(verifyToken, authorize(ROLES.CLIENT));
  * /api/addresses:
  *   get:
  *     summary: Listar mis direcciones
+ *     description: Devuelve las direcciones del cliente autenticado, paginadas.
  *     tags: [Addresses]
+ *     parameters:
+ *       - $ref: '#/components/parameters/Page'
+ *       - $ref: '#/components/parameters/PageSize'
+ *       - $ref: '#/components/parameters/SortBy'
+ *       - $ref: '#/components/parameters/SortDirection'
  *     responses:
  *       200: { description: OK }
+ *       401: { $ref: '#/components/responses/Unauthorized' }
+ *       403: { $ref: '#/components/responses/Forbidden' }
  */
 router.get("/", listMyAddresses);
 
@@ -38,9 +54,16 @@ router.get("/", listMyAddresses);
  * /api/addresses/{id}:
  *   get:
  *     summary: Obtener dirección por id
+ *     description: Solo devuelve direcciones que pertenecen al cliente autenticado.
  *     tags: [Addresses]
+ *     parameters:
+ *       - $ref: '#/components/parameters/Id'
  *     responses:
  *       200: { description: OK }
+ *       400: { $ref: '#/components/responses/BadRequest' }
+ *       401: { $ref: '#/components/responses/Unauthorized' }
+ *       403: { $ref: '#/components/responses/Forbidden' }
+ *       404: { $ref: '#/components/responses/NotFound' }
  */
 router.get("/:id", getAddressById);
 
@@ -50,8 +73,16 @@ router.get("/:id", getAddressById);
  *   post:
  *     summary: Crear dirección
  *     tags: [Addresses]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema: { $ref: '#/components/schemas/AddressInput' }
  *     responses:
  *       201: { description: Creado }
+ *       400: { $ref: '#/components/responses/BadRequest' }
+ *       401: { $ref: '#/components/responses/Unauthorized' }
+ *       403: { $ref: '#/components/responses/Forbidden' }
  */
 router.post("/", addressValidator, runValidation, createAddress);
 
@@ -61,8 +92,19 @@ router.post("/", addressValidator, runValidation, createAddress);
  *   put:
  *     summary: Actualizar dirección
  *     tags: [Addresses]
+ *     parameters:
+ *       - $ref: '#/components/parameters/Id'
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema: { $ref: '#/components/schemas/AddressInput' }
  *     responses:
  *       200: { description: Actualizado }
+ *       400: { $ref: '#/components/responses/BadRequest' }
+ *       401: { $ref: '#/components/responses/Unauthorized' }
+ *       403: { $ref: '#/components/responses/Forbidden' }
+ *       404: { $ref: '#/components/responses/NotFound' }
  */
 router.put("/:id", addressValidator, runValidation, updateAddress);
 
@@ -72,8 +114,13 @@ router.put("/:id", addressValidator, runValidation, updateAddress);
  *   delete:
  *     summary: Eliminar dirección
  *     tags: [Addresses]
+ *     parameters:
+ *       - $ref: '#/components/parameters/Id'
  *     responses:
  *       200: { description: Eliminado }
+ *       401: { $ref: '#/components/responses/Unauthorized' }
+ *       403: { $ref: '#/components/responses/Forbidden' }
+ *       404: { $ref: '#/components/responses/NotFound' }
  */
 router.delete("/:id", deleteAddress);
 
