@@ -26,6 +26,7 @@ export async function seedDefaultAdmin() {
     email: email.toLowerCase(),
     password: hashedPassword,
     phone: "0000000000",
+    identificationCard: "000-0000000-0",
     role: ROLES.ADMIN,
     isActive: true,
     isDefaultAdmin: true,

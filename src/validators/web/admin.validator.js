@@ -10,7 +10,7 @@ const administratorFields = [
 ];
 
 const matchesConfirmation = body("confirmPassword").custom((value, { req }) => {
-  if (value !== req.body.password) {
+  if (req.body.password && value !== req.body.password) {
     throw new Error("La contraseña y la confirmación no coinciden.");
   }
   return true;

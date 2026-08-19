@@ -171,7 +171,7 @@ export function showNewAdministrator(req, res) {
 }
 
 export async function createAdministrator(req, res) {
-  const { firstName, lastName, userName, email, password, phone } = req.body;
+  const { firstName, lastName, identificationCard, userName, email, password, phone } = req.body;
 
   const existing = await User.findOne({ $or: [{ userName }, { email: email.toLowerCase() }] });
   if (existing) {
@@ -184,6 +184,7 @@ export async function createAdministrator(req, res) {
   await User.create({
     firstName,
     lastName,
+    identificationCard,
     userName,
     email: email.toLowerCase(),
     password: hashedPassword,
@@ -224,9 +225,10 @@ export async function updateAdministrator(req, res) {
     return res.redirect("/admin/administrators");
   }
 
-  const { firstName, lastName, userName, email, phone, password } = req.body;
+  const { firstName, lastName, identificationCard, userName, email, phone, password } = req.body;
   admin.firstName = firstName;
   admin.lastName = lastName;
+  admin.identificationCard = identificationCard;
   admin.userName = userName;
   admin.email = email.toLowerCase();
   admin.phone = phone;
