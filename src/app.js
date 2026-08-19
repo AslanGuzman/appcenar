@@ -18,14 +18,9 @@ import { ORDER_STATUS } from "./utils/constants.js";
 
 const app = express();
 
-// Railway (y la mayoría de PaaS) coloca la app detrás de un proxy que
-// termina el HTTPS. Sin esto, Express no reconoce la conexión como segura
-// y las cookies con "secure: true" nunca se guardarían en el navegador.
 if (process.env.NODE_ENV === "production" || process.env.NODE_ENV === "qa") {
   app.set("trust proxy", 1);
 }
-
-/* ------------------------------ Middlewares base ------------------------------ */
 
 app.use(
   helmet({
@@ -45,8 +40,6 @@ if (process.env.NODE_ENV !== "test") {
 app.use("/uploads", express.static(path.resolve("public/uploads")));
 app.use(express.static(path.resolve("public")));
 
-/* ------------------------------ Sesiones + flash ------------------------------ */
-
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "appcenar-secret",
@@ -62,8 +55,6 @@ app.use(
 );
 app.use(flash());
 app.use(exposeLocals);
-
-/* ------------------------------ Vistas (Handlebars) ------------------------------ */
 
 const STATUS_LABELS = {
   [ORDER_STATUS.PENDING]: "Pendiente",
@@ -101,18 +92,12 @@ app.engine(
 app.set("view engine", "hbs");
 app.set("views", path.resolve("src/views"));
 
-/* ------------------------------ Documentación API ------------------------------ */
-
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.get("/health", (req, res) => res.json({ status: "ok", environment: process.env.NODE_ENV }));
 
-/* ------------------------------ Rutas ------------------------------ */
-
 app.use("/api", apiRoutes);
 app.use("/", webRoutes);
-
-/* ------------------------------ Manejo de errores ------------------------------ */
 
 app.use((req, res, next) => {
   if (req.path.startsWith("/api")) return notFoundHandler(req, res);

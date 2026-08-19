@@ -9,10 +9,6 @@ export function getRoleHome(role) {
   return ROLE_HOME[role] || "/auth/login";
 }
 
-/**
- * Si el usuario ya tiene sesión activa, lo redirige a su Home
- * (usado en /auth/login para no dejarlo ver el login de nuevo).
- */
 export function redirectIfAuthenticated(req, res, next) {
   if (req.session?.user) {
     return res.redirect(getRoleHome(req.session.user.role));
@@ -20,11 +16,6 @@ export function redirectIfAuthenticated(req, res, next) {
   return next();
 }
 
-/**
- * Exige una sesión activa. Si no existe, redirige al login recordando
- * a dónde volver (returnTo), para que el usuario pueda seguir exactamente
- * donde se quedó después de iniciar sesión (ej. retomar su checkout).
- */
 export function requireAuth(req, res, next) {
   if (!req.session?.user) {
     req.session.returnTo = req.body?.returnTo || req.originalUrl;
@@ -34,9 +25,6 @@ export function requireAuth(req, res, next) {
   return next();
 }
 
-/**
- * Exige uno de los roles indicados. Se usa después de requireAuth.
- */
 export function requireRole(...allowedRoles) {
   return (req, res, next) => {
     if (!req.session?.user) {
@@ -50,9 +38,6 @@ export function requireRole(...allowedRoles) {
   };
 }
 
-/**
- * Expone el usuario de sesión y los mensajes flash a todas las vistas.
- */
 export function exposeLocals(req, res, next) {
   res.locals.currentUser = req.session?.user || null;
   res.locals.successMessages = req.flash("success");

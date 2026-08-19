@@ -1,10 +1,13 @@
-import { Configuration } from "../models/Configuration.js";
-import { success, fail } from "../utils/apiResponse.js";
+import { success } from "../utils/apiResponse.js";
+import {
+  listConfigurations,
+  getConfigurationByKey as findConfigurationByKey,
+  updateConfiguration as saveConfiguration,
+} from "../services/configuration.service.js";
 
 export async function getConfigurations(req, res, next) {
   try {
-    const configurations = await Configuration.find().sort({ key: 1 });
-    return success(res, { data: configurations });
+    return success(res, { data: await listConfigurations() });
   } catch (err) {
     return next(err);
   }
@@ -12,11 +15,7 @@ export async function getConfigurations(req, res, next) {
 
 export async function getConfigurationByKey(req, res, next) {
   try {
-    const configuration = await Configuration.findOne({ key: req.params.key.toUpperCase() });
-    if (!configuration) {
-      return fail(res, { statusCode: 404, message: "Configuración no encontrada." });
-    }
-    return success(res, { data: configuration });
+    return success(res, { data: await findConfigurationByKey(req.params.key) });
   } catch (err) {
     return next(err);
   }
@@ -24,29 +23,10 @@ export async function getConfigurationByKey(req, res, next) {
 
 export async function updateConfiguration(req, res, next) {
   try {
-    const key = req.params.key.toUpperCase();
-    const { value } = req.body;
-
-    const configuration = await Configuration.findOne({ key });
-    if (!configuration) {
-      return fail(res, { statusCode: 404, message: "Configuración no encontrada." });
-    }
-
-    if (configuration.type === "number" && Number.isNaN(Number(value))) {
-      return fail(res, { statusCode: 400, message: "El valor debe ser numérico para esta configuración." });
-    }
-
-    configuration.value = String(value);
-    await configuration.save();
+    const configuration = await saveConfiguration(req.params.key, req.body.value);
 
     return success(res, { message: "Configuración actualizada correctamente.", data: configuration });
   } catch (err) {
     return next(err);
   }
-}
-
-// Utilidad interna usada por otros módulos (p. ej. Orders) para obtener el ITBIS vigente
-export async function getItbisPercentage() {
-  const config = await Configuration.findOne({ key: "ITBIS" });
-  return config ? Number(config.value) : 0;
 }

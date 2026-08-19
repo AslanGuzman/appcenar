@@ -1,6 +1,5 @@
 import { Favorite } from "../models/Favorite.js";
 import { Commerce } from "../models/Commerce.js";
-import { User } from "../models/User.js";
 import { success, fail } from "../utils/apiResponse.js";
 import { buildPagination, buildPaginatedResponse } from "../utils/pagination.js";
 

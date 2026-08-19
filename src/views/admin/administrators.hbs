@@ -8,12 +8,13 @@
 
 <div class="table-responsive brand-card p-2">
   <table class="table table-brand align-middle mb-0">
-    <thead><tr><th>Nombre</th><th>Usuario</th><th>Correo</th><th>Estado</th><th></th></tr></thead>
+    <thead><tr><th>Nombre</th><th>Usuario</th><th>Cédula</th><th>Correo</th><th>Estado</th><th></th></tr></thead>
     <tbody>
       {{#each admins}}
         <tr>
           <td>{{this.firstName}} {{this.lastName}} {{#if this.isDefaultAdmin}}<span class="badge bg-secondary">Por defecto</span>{{/if}}</td>
           <td>{{this.userName}}</td>
+          <td>{{this.identificationCard}}</td>
           <td>{{this.email}}</td>
           <td>
             {{#if this.isActive}}

@@ -11,6 +11,7 @@ const userSchema = new Schema(
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true },
     phone: { type: String, required: true },
+    identificationCard: { type: String, default: null, trim: true },
     profileImage: { type: String, default: null },
 
     role: {
@@ -22,15 +23,12 @@ const userSchema = new Schema(
     isActive: { type: Boolean, default: false },
     isDefaultAdmin: { type: Boolean, default: false },
 
-    // Activación de cuenta
     activateToken: { type: String, default: null },
     activateTokenExpiration: { type: Date, default: null },
 
-    // Recuperación de contraseña
     resetToken: { type: String, default: null },
     resetTokenExpiration: { type: Date, default: null },
 
-    // Solo aplica a role = Delivery
     isAvailable: { type: Boolean, default: true },
   },
   { timestamps: true }

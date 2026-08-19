@@ -3,23 +3,31 @@ import { Category } from "../../models/Category.js";
 import { Product } from "../../models/Product.js";
 import { Order } from "../../models/Order.js";
 import { User } from "../../models/User.js";
-import { ROLES, ORDER_STATUS } from "../../utils/constants.js";
+import { ORDER_STATUS } from "../../utils/constants.js";
+import { popFormData } from "../utils/formData.js";
+import { getCommerceByUser } from "../../services/user.service.js";
+import { assignDelivery as assignDeliveryToOrder, sortByStatusThenNewest } from "../../services/order.service.js";
 
-async function getCommerce(userId) {
-  return Commerce.findOne({ user: userId });
+const getCommerce = getCommerceByUser;
+
+function toProductForm(req, product = {}) {
+  const { categoryId, ...rest } = popFormData(req);
+  return { ...product, ...rest, ...(categoryId && { category: categoryId }) };
 }
-
-/* ---------------------------- Home / Pedidos ---------------------------- */
 
 export async function home(req, res) {
   const commerce = await getCommerce(req.session.user.id);
-  const orders = await Order.find({ commerce: commerce._id }).sort({ createdAt: -1 }).lean();
-  res.render("commerce/home", { title: "Pedidos", orders });
+  const orders = await Order.find({ commerce: commerce._id })
+    .populate("commerce", "name logo")
+    .lean();
+
+  res.render("commerce/home", { title: "Pedidos", orders: sortByStatusThenNewest(orders) });
 }
 
 export async function showOrderDetail(req, res) {
   const commerce = await getCommerce(req.session.user.id);
   const order = await Order.findOne({ _id: req.params.id, commerce: commerce._id })
+    .populate("commerce", "name logo")
     .populate("delivery", "firstName lastName phone")
     .lean();
 
@@ -37,37 +45,26 @@ export async function showOrderDetail(req, res) {
 
 export async function assignDelivery(req, res) {
   const commerce = await getCommerce(req.session.user.id);
-  const order = await Order.findOne({ _id: req.params.id, commerce: commerce._id });
 
-  if (!order || order.status !== ORDER_STATUS.PENDING) {
-    req.flash("errors", "Este pedido ya no está pendiente.");
-    return res.redirect(`/commerce/orders/${req.params.id}`);
+  try {
+    await assignDeliveryToOrder({ orderId: req.params.id, commerceId: commerce._id });
+    req.flash("success", "Delivery asignado correctamente.");
+  } catch (err) {
+    req.flash("errors", err.message);
   }
 
-  const availableDelivery = await User.findOne({ role: ROLES.DELIVERY, isActive: true, isAvailable: true });
-
-  if (!availableDelivery) {
-    req.flash("errors", "No hay delivery disponible en este momento. Intenta más tarde.");
-    return res.redirect(`/commerce/orders/${req.params.id}`);
-  }
-
-  order.delivery = availableDelivery._id;
-  order.status = ORDER_STATUS.IN_PROGRESS;
-  await order.save();
-
-  availableDelivery.isAvailable = false;
-  await availableDelivery.save();
-
-  req.flash("success", "Delivery asignado correctamente.");
   return res.redirect(`/commerce/orders/${req.params.id}`);
 }
-
-/* ---------------------------- Perfil ---------------------------- */
 
 export async function showProfile(req, res) {
   const commerce = await Commerce.findOne({ user: req.session.user.id }).lean();
   const user = await User.findById(req.session.user.id).lean();
-  res.render("commerce/profile", { title: "Mi perfil", commerce, user });
+  const formData = popFormData(req);
+  res.render("commerce/profile", {
+    title: "Mi perfil",
+    commerce: { ...commerce, ...formData },
+    user: { ...user, ...formData },
+  });
 }
 
 export async function updateProfile(req, res) {
@@ -88,8 +85,6 @@ export async function updateProfile(req, res) {
   return res.redirect("/commerce/profile");
 }
 
-/* ---------------------------- Categorías ---------------------------- */
-
 export async function listCategories(req, res) {
   const commerce = await getCommerce(req.session.user.id);
   const categories = await Category.find({ commerce: commerce._id }).sort({ name: 1 }).lean();
@@ -102,7 +97,11 @@ export async function listCategories(req, res) {
 }
 
 export function showNewCategory(req, res) {
-  res.render("commerce/category-form", { title: "Nueva categoría", category: {}, formAction: "/commerce/categories" });
+  res.render("commerce/category-form", {
+    title: "Nueva categoría",
+    category: popFormData(req),
+    formAction: "/commerce/categories",
+  });
 }
 
 export async function createCategory(req, res) {
@@ -120,7 +119,11 @@ export async function showEditCategory(req, res) {
     req.flash("errors", "Categoría no encontrada.");
     return res.redirect("/commerce/categories");
   }
-  res.render("commerce/category-form", { title: "Editar categoría", category, formAction: `/commerce/categories/${category._id}` });
+  res.render("commerce/category-form", {
+    title: "Editar categoría",
+    category: { ...category, ...popFormData(req) },
+    formAction: `/commerce/categories/${category._id}`,
+  });
 }
 
 export async function updateCategory(req, res) {
@@ -158,8 +161,6 @@ export async function deleteCategory(req, res) {
   return res.redirect("/commerce/categories");
 }
 
-/* ---------------------------- Productos ---------------------------- */
-
 export async function listProducts(req, res) {
   const commerce = await getCommerce(req.session.user.id);
   const products = await Product.find({ commerce: commerce._id }).populate("category", "name").sort({ name: 1 }).lean();
@@ -177,7 +178,7 @@ export async function showNewProduct(req, res) {
 
   res.render("commerce/product-form", {
     title: "Nuevo producto",
-    product: {},
+    product: toProductForm(req),
     categories,
     formAction: "/commerce/products",
   });
@@ -220,7 +221,7 @@ export async function showEditProduct(req, res) {
 
   res.render("commerce/product-form", {
     title: "Editar producto",
-    product,
+    product: toProductForm(req, product),
     categories,
     formAction: `/commerce/products/${product._id}`,
   });

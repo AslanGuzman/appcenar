@@ -11,4 +11,10 @@ export const ORDER_STATUS = Object.freeze({
   COMPLETED: "Completed",
 });
 
+export const ORDER_STATUS_SEQUENCE = Object.freeze([
+  ORDER_STATUS.PENDING,
+  ORDER_STATUS.IN_PROGRESS,
+  ORDER_STATUS.COMPLETED,
+]);
+
 export const TOKEN_EXPIRATION_HOURS = 24;

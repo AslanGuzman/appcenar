@@ -14,8 +14,17 @@
         <span class="text-muted small">{{formatDate order.createdAt}}</span>
       </div>
       {{#each order.items}}
-        <div class="d-flex justify-content-between border-bottom py-2">
-          <span>{{this.name}}</span><span>RD$ {{this.price}}</span>
+        <div class="d-flex align-items-center gap-3 border-bottom py-2">
+          {{#if this.image}}
+            <img src="{{this.image}}" alt="{{this.name}}" style="width:48px;height:48px;object-fit:cover;border-radius:8px" />
+          {{else}}
+            <div style="width:48px;height:48px;background:var(--brand-secondary-light);border-radius:8px"></div>
+          {{/if}}
+          <div class="flex-grow-1">
+            <div class="fw-semibold">{{this.name}}</div>
+            <div class="text-muted small">Cantidad: {{this.quantity}}</div>
+          </div>
+          <span class="fw-semibold">RD$ {{this.price}}</span>
         </div>
       {{/each}}
       <div class="d-flex justify-content-between fw-bold pt-3">

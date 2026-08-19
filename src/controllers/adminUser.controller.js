@@ -84,10 +84,11 @@ export async function getCommerces(req, res, next) {
 
 export async function getAdministrators(req, res, next) {
   try {
-    const { search } = req.query;
+    const { search, isActive } = req.query;
     const { page, pageSize, skip, sort } = buildPagination(req.query);
 
     const filter = { role: ROLES.ADMIN };
+    if (isActive !== undefined) filter.isActive = isActive === "true";
     if (search) {
       filter.$or = [
         { firstName: { $regex: search, $options: "i" } },
@@ -112,7 +113,7 @@ export async function getAdministrators(req, res, next) {
 
 export async function createAdministrator(req, res, next) {
   try {
-    const { firstName, lastName, userName, email, password, phone } = req.body;
+    const { firstName, lastName, identificationCard, userName, email, password, phone } = req.body;
 
     const existing = await User.findOne({ $or: [{ userName }, { email: email.toLowerCase() }] });
     if (existing) {
@@ -124,6 +125,7 @@ export async function createAdministrator(req, res, next) {
     const admin = await User.create({
       firstName,
       lastName,
+      identificationCard,
       userName,
       email: email.toLowerCase(),
       password: hashedPassword,
@@ -153,9 +155,10 @@ export async function updateAdministrator(req, res, next) {
       return fail(res, { statusCode: 403, message: "No puedes editar tu propio usuario desde este módulo." });
     }
 
-    const { firstName, lastName, userName, email, phone, password } = req.body;
+    const { firstName, lastName, identificationCard, userName, email, phone, password } = req.body;
     if (firstName) target.firstName = firstName;
     if (lastName) target.lastName = lastName;
+    if (identificationCard) target.identificationCard = identificationCard;
     if (userName) target.userName = userName;
     if (email) target.email = email.toLowerCase();
     if (phone) target.phone = phone;

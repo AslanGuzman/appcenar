@@ -1,7 +1,3 @@
-/**
- * Construye las opciones de paginación/orden a partir del query string,
- * y devuelve también un objeto listo para armar la respuesta paginada.
- */
 export function buildPagination(query, { defaultSortBy = "createdAt", defaultSortDirection = "desc" } = {}) {
   const page = Math.max(parseInt(query.page, 10) || 1, 1);
   const pageSize = Math.min(Math.max(parseInt(query.pageSize, 10) || 10, 1), 100);

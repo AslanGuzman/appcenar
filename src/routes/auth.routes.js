@@ -25,13 +25,6 @@ const router = Router();
 
 /**
  * @swagger
- * tags:
- *   name: Auth
- *   description: Autenticación, registro y recuperación de cuenta
- */
-
-/**
- * @swagger
  * /api/auth/login:
  *   post:
  *     summary: Iniciar sesión con userName o email y password
@@ -186,9 +179,25 @@ router.post(
 router.post("/confirm-email", confirmEmailValidator, runValidation, confirmEmail);
 
 /**
- * Endpoint público pensado para ser abierto desde el enlace del correo de
- * activación (los clientes de correo/navegadores solo pueden seguir enlaces
- * GET). Muestra una página HTML de confirmación en vez de JSON.
+ * @swagger
+ * /api/auth/confirm-email:
+ *   get:
+ *     summary: Confirmar cuenta desde el enlace del correo
+ *     description: >
+ *       Misma lógica que el endpoint POST, expuesta como GET para que pueda abrirse
+ *       directamente desde el enlace del correo de activación. Responde con una página
+ *       HTML de confirmación en vez de JSON.
+ *     tags: [Auth]
+ *     security: []
+ *     parameters:
+ *       - name: token
+ *         in: query
+ *         required: true
+ *         description: Token de activación recibido por correo
+ *         schema: { type: string }
+ *     responses:
+ *       200: { description: Cuenta activada }
+ *       400: { description: Token ausente, inválido o expirado }
  */
 router.get("/confirm-email", confirmEmailFromLink);
 

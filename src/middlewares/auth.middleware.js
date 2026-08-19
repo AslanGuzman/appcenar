@@ -1,10 +1,6 @@
 import jwt from "jsonwebtoken";
 import { fail } from "../utils/apiResponse.js";
 
-/**
- * Verifica que la solicitud incluya un token JWT válido en el header
- * Authorization: Bearer {token}. Adjunta el payload decodificado en req.user.
- */
 export function verifyToken(req, res, next) {
   const authHeader = req.headers.authorization;
 
@@ -23,10 +19,6 @@ export function verifyToken(req, res, next) {
   }
 }
 
-/**
- * Restringe el acceso a los roles indicados.
- * Uso: authorize(ROLES.ADMIN, ROLES.COMMERCE)
- */
 export function authorize(...allowedRoles) {
   return (req, res, next) => {
     if (!req.user) {

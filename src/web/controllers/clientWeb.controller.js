@@ -6,17 +6,14 @@ import { Address } from "../../models/Address.js";
 import { Favorite } from "../../models/Favorite.js";
 import { Order } from "../../models/Order.js";
 import { User } from "../../models/User.js";
-import { Configuration } from "../../models/Configuration.js";
-import { ORDER_STATUS } from "../../utils/constants.js";
-
-/* ---------------------------- Home (público) ---------------------------- */
+import { popFormData } from "../utils/formData.js";
+import { createOrder } from "../../services/order.service.js";
+import { getItbisPercentage, calculateOrderTotals } from "../../services/configuration.service.js";
 
 export async function home(req, res) {
   const commerceTypes = await CommerceType.find().sort({ name: 1 }).lean();
   res.render("client/home", { title: "Home", commerceTypes });
 }
-
-/* ---------------------------- Comercios (público) ---------------------------- */
 
 export async function listCommerces(req, res) {
   const { typeId, search } = req.query;
@@ -67,8 +64,6 @@ export async function toggleFavorite(req, res) {
 
   return res.redirect(redirectTo);
 }
-
-/* ---------------------------- Catálogo y carrito (público) ---------------------------- */
 
 function getCart(req) {
   if (!req.session.cart) req.session.cart = null;
@@ -148,8 +143,6 @@ export async function removeFromCart(req, res) {
   return res.redirect(`/client/catalog/${commerceId}`);
 }
 
-/* ---------------------------- Checkout (requiere sesión) ---------------------------- */
-
 export async function showCheckout(req, res) {
   const cart = getCart(req);
 
@@ -161,27 +154,21 @@ export async function showCheckout(req, res) {
   const commerce = await Commerce.findById(cart.commerceId).lean();
   const addresses = await Address.find({ client: req.session.user.id }).sort({ createdAt: -1 }).lean();
 
-  const itbisConfig = await Configuration.findOne({ key: "ITBIS" }).lean();
-  const itbisPercentage = itbisConfig ? Number(itbisConfig.value) : 0;
-
-  const subtotal = cart.items.reduce((s, i) => s + i.price, 0);
-  const itbisAmount = Number(((subtotal * itbisPercentage) / 100).toFixed(2));
-  const total = Number((subtotal + itbisAmount).toFixed(2));
+  const totals = calculateOrderTotals(
+    cart.items.map((item) => ({ price: item.price, quantity: 1 })),
+    await getItbisPercentage()
+  );
 
   res.render("client/checkout", {
     title: "Confirmar pedido",
     commerce,
     cart,
     addresses,
-    subtotal,
-    itbisPercentage,
-    itbisAmount,
-    total,
+    ...totals,
   });
 }
 
 export async function placeOrder(req, res) {
-  const { addressId } = req.body;
   const cart = getCart(req);
 
   if (!cart || !cart.items.length) {
@@ -189,51 +176,25 @@ export async function placeOrder(req, res) {
     return res.redirect("/client/home");
   }
 
-  const address = await Address.findOne({ _id: addressId, client: req.session.user.id });
-  if (!address) {
-    req.flash("errors", "Selecciona una dirección válida.");
+  try {
+    await createOrder({
+      clientId: req.session.user.id,
+      addressId: req.body.addressId,
+      items: cart.items.map((item) => ({ productId: item.productId, quantity: 1 })),
+    });
+  } catch (err) {
+    req.flash("errors", err.message);
     return res.redirect("/client/checkout");
   }
-
-  const productIds = cart.items.map((i) => i.productId);
-  const products = await Product.find({ _id: { $in: productIds }, isActive: true });
-
-  const orderItems = cart.items
-    .map((cartItem) => {
-      const product = products.find((p) => p._id.toString() === cartItem.productId);
-      if (!product) return null;
-      return { product: product._id, name: product.name, price: product.price, quantity: 1 };
-    })
-    .filter(Boolean);
-
-  const subtotal = orderItems.reduce((s, i) => s + i.price * i.quantity, 0);
-  const itbisConfig = await Configuration.findOne({ key: "ITBIS" });
-  const itbisPercentage = itbisConfig ? Number(itbisConfig.value) : 0;
-  const itbisAmount = Number(((subtotal * itbisPercentage) / 100).toFixed(2));
-  const total = Number((subtotal + itbisAmount).toFixed(2));
-
-  await Order.create({
-    client: req.session.user.id,
-    commerce: cart.commerceId,
-    address: address._id,
-    items: orderItems,
-    subtotal,
-    itbisPercentage,
-    itbisAmount,
-    total,
-    status: ORDER_STATUS.PENDING,
-  });
 
   req.session.cart = null;
   req.flash("success", "Tu pedido fue creado correctamente.");
   return res.redirect("/client/home");
 }
 
-/* ---------------------------- Perfil ---------------------------- */
-
 export async function showProfile(req, res) {
   const user = await User.findById(req.session.user.id).lean();
-  res.render("client/profile", { title: "Mi perfil", profile: user });
+  res.render("client/profile", { title: "Mi perfil", profile: { ...user, ...popFormData(req) } });
 }
 
 export async function updateProfile(req, res) {
@@ -251,8 +212,6 @@ export async function updateProfile(req, res) {
   return res.redirect("/client/profile");
 }
 
-/* ---------------------------- Pedidos ---------------------------- */
-
 export async function listOrders(req, res) {
   const orders = await Order.find({ client: req.session.user.id }).sort({ createdAt: -1 }).populate("commerce", "name logo").lean();
   res.render("client/orders", { title: "Mis pedidos", orders });
@@ -267,15 +226,17 @@ export async function showOrderDetail(req, res) {
   res.render("client/order-detail", { title: "Detalle del pedido", order });
 }
 
-/* ---------------------------- Direcciones ---------------------------- */
-
 export async function listAddresses(req, res) {
   const addresses = await Address.find({ client: req.session.user.id }).sort({ createdAt: -1 }).lean();
   res.render("client/addresses", { title: "Mis direcciones", addresses });
 }
 
 export function showNewAddress(req, res) {
-  res.render("client/address-form", { title: "Nueva dirección", address: {}, formAction: "/client/addresses" });
+  res.render("client/address-form", {
+    title: "Nueva dirección",
+    address: popFormData(req),
+    formAction: "/client/addresses",
+  });
 }
 
 export async function createAddress(req, res) {
@@ -291,7 +252,11 @@ export async function showEditAddress(req, res) {
     req.flash("errors", "Dirección no encontrada.");
     return res.redirect("/client/addresses");
   }
-  res.render("client/address-form", { title: "Editar dirección", address, formAction: `/client/addresses/${address._id}` });
+  res.render("client/address-form", {
+    title: "Editar dirección",
+    address: { ...address, ...popFormData(req) },
+    formAction: `/client/addresses/${address._id}`,
+  });
 }
 
 export async function updateAddress(req, res) {
@@ -320,8 +285,6 @@ export async function deleteAddress(req, res) {
   req.flash("success", "Dirección eliminada correctamente.");
   return res.redirect("/client/addresses");
 }
-
-/* ---------------------------- Favoritos ---------------------------- */
 
 export async function listFavorites(req, res) {
   const favorites = await Favorite.find({ client: req.session.user.id }).populate("commerce", "name logo").sort({ createdAt: -1 }).lean();

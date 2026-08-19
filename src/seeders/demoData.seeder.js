@@ -31,10 +31,6 @@ const DEMO_USERNAMES = [
   "maria_demo",
 ];
 
-/**
- * Elimina cualquier rastro de una siembra anterior que haya quedado
- * incompleta, para que el siguiente intento siempre arranque desde cero.
- */
 async function purgePartialDemoData() {
   const demoUsers = await User.find({ userName: { $in: DEMO_USERNAMES } }).select("_id");
   const demoUserIds = demoUsers.map((u) => u._id);
@@ -55,13 +51,6 @@ async function purgePartialDemoData() {
   await Configuration.deleteOne({ key: "DEMO_SEEDED" });
 }
 
-/**
- * Crea datos de demostración (comercios, productos, clientes, deliveries,
- * direcciones y algunos pedidos de ejemplo). Usa una bandera de finalización
- * (Configuration "DEMO_SEEDED") para no duplicar datos; si una corrida
- * anterior quedó incompleta, limpia los residuos automáticamente antes de
- * volver a intentar.
- */
 export async function seedDemoData() {
   const seededFlag = await Configuration.findOne({ key: "DEMO_SEEDED" });
   if (seededFlag) {
@@ -72,16 +61,12 @@ export async function seedDemoData() {
 
   console.log("[seeder] Sembrando datos de demostración...");
 
-  /* ---------------------------- Tipos de comercio ---------------------------- */
-
   const [restaurantes, farmacias, supermercados, cafeterias] = await CommerceType.create([
     { name: "Restaurantes", description: "Comida preparada para pedir a domicilio.", icon: icon("R", "d95d39") },
     { name: "Farmacias", description: "Medicamentos y productos de cuidado personal.", icon: icon("F", "2f6f5e") },
     { name: "Supermercados", description: "Víveres y productos del hogar.", icon: icon("S", "b8492b") },
     { name: "Cafeterías", description: "Café, postres y meriendas.", icon: icon("C", "6b7370") },
   ]);
-
-  /* ---------------------------- Comercios ---------------------------- */
 
   const commerceDefs = [
     {
@@ -206,8 +191,6 @@ export async function seedDemoData() {
     createdCommerces.push({ commerce, categories, products });
   }
 
-  /* ---------------------------- Clientes ---------------------------- */
-
   const clientDefs = [
     { firstName: "Ana", lastName: "Martínez", userName: "ana_demo", email: "ana@demo.com", phone: "8095552001" },
     { firstName: "Luis", lastName: "Fernández", userName: "luis_demo", email: "luis@demo.com", phone: "8095552002" },
@@ -251,8 +234,6 @@ export async function seedDemoData() {
     },
   ]);
 
-  /* ---------------------------- Deliveries ---------------------------- */
-
   const deliveryDefs = [
     { firstName: "Carlos", lastName: "Reyes", userName: "carlos_demo", email: "carlos@demo.com", phone: "8095553001" },
     { firstName: "María", lastName: "Pérez", userName: "maria_demo", email: "maria@demo.com", phone: "8095553002" },
@@ -270,8 +251,6 @@ export async function seedDemoData() {
     createdDeliveries.push(delivery);
   }
 
-  /* ---------------------------- Pedidos de ejemplo ---------------------------- */
-
   const itbisConfig = await Configuration.findOne({ key: "ITBIS" });
   const itbisPercentage = itbisConfig ? Number(itbisConfig.value) : 18;
 
@@ -280,6 +259,7 @@ export async function seedDemoData() {
       product: products[i]._id,
       name: products[i].name,
       price: products[i].price,
+      image: products[i].image,
       quantity: 1,
     }));
   }
@@ -291,7 +271,6 @@ export async function seedDemoData() {
     return { subtotal, itbisPercentage, itbisAmount, total };
   }
 
-  // Pedido 1: Pendiente (Parrillada, cliente Ana)
   const items1 = buildOrderItems(createdCommerces[0].products, [0, 2]);
   await Order.create({
     client: createdClients[0]._id,
@@ -302,7 +281,6 @@ export async function seedDemoData() {
     status: ORDER_STATUS.PENDING,
   });
 
-  // Pedido 2: En proceso (Café Aroma, cliente Luis, delivery Carlos)
   const items2 = buildOrderItems(createdCommerces[3].products, [0, 1]);
   await Order.create({
     client: createdClients[1]._id,
@@ -316,7 +294,6 @@ export async function seedDemoData() {
   createdDeliveries[0].isAvailable = false;
   await createdDeliveries[0].save();
 
-  // Pedido 3: Completado (Supermercado, cliente Ana, delivery María)
   const items3 = buildOrderItems(createdCommerces[2].products, [1, 2]);
   await Order.create({
     client: createdClients[0]._id,
