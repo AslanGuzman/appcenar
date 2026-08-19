@@ -1,6 +1,8 @@
 import { Router } from "express";
 import { verifyToken, authorize } from "../middlewares/auth.middleware.js";
+import { runValidation } from "../middlewares/validate.middleware.js";
 import { ROLES } from "../utils/constants.js";
+import { addFavoriteValidator, removeFavoriteValidator } from "../validators/favorite.validator.js";
 import { listMyFavorites, addFavorite, removeFavorite } from "../controllers/favorite.controller.js";
 
 const router = Router();
@@ -42,7 +44,7 @@ router.get("/", listMyFavorites);
  *       201: { description: Agregado }
  *       409: { description: Ya existe }
  */
-router.post("/", addFavorite);
+router.post("/", addFavoriteValidator, runValidation, addFavorite);
 
 /**
  * @swagger
@@ -53,6 +55,6 @@ router.post("/", addFavorite);
  *     responses:
  *       200: { description: Removido }
  */
-router.delete("/:commerceId", removeFavorite);
+router.delete("/:commerceId", removeFavoriteValidator, runValidation, removeFavorite);
 
 export default router;

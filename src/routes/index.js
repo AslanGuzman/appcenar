@@ -37,7 +37,6 @@ router.get("/", (req, res) =>
 router.use("/auth", authRoutes);
 router.use("/account", accountRoutes);
 
-// Catálogo visible para el cliente (tipos de comercio, comercios, catálogo de productos)
 router.use("/", commerceCatalogRoutes);
 
 router.use("/orders", orderRoutes);

@@ -37,7 +37,7 @@ router.post(
   authController.registerCommerce
 );
 
-router.get("/activate/:token", authController.activateAccount);
+router.get("/activate/:token", authController.activateAccountFromLink);
 
 router.get("/forgot-password", redirectIfAuthenticated, authController.showForgotPassword);
 router.post(

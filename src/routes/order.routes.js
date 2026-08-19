@@ -26,8 +26,6 @@ router.use(verifyToken);
  *   description: Pedidos (Client, Commerce, Delivery)
  */
 
-/* ------------------------- Client ------------------------- */
-
 /**
  * @swagger
  * /api/orders:
@@ -76,8 +74,6 @@ router.get("/my-orders", authorize(ROLES.CLIENT), getMyOrders);
  */
 router.get("/my-orders/:id", authorize(ROLES.CLIENT), getMyOrderDetail);
 
-/* ------------------------- Commerce ------------------------- */
-
 /**
  * @swagger
  * /api/orders/commerce:
@@ -111,8 +107,6 @@ router.get("/commerce/:id", authorize(ROLES.COMMERCE), getCommerceOrderDetail);
  *       409: { description: No hay delivery disponible }
  */
 router.patch("/:id/assign-delivery", authorize(ROLES.COMMERCE), assignDelivery);
-
-/* ------------------------- Delivery ------------------------- */
 
 /**
  * @swagger

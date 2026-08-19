@@ -1,20 +1,14 @@
-import bcrypt from "bcryptjs";
 import { User } from "../../models/User.js";
 import { Commerce } from "../../models/Commerce.js";
 import { CommerceType } from "../../models/CommerceType.js";
-import { Category } from "../../models/Category.js";
-import { Product } from "../../models/Product.js";
 import { Order } from "../../models/Order.js";
-import { Favorite } from "../../models/Favorite.js";
 import { Configuration } from "../../models/Configuration.js";
 import { ROLES, ORDER_STATUS } from "../../utils/constants.js";
 import { popFormData } from "../utils/formData.js";
+import { getDashboardMetrics } from "../../services/dashboard.service.js";
+import { deleteCommerceTypeCascade, withCommerceCounts } from "../../services/commerceType.service.js";
+import { hashPassword } from "../../services/auth.service.js";
 
-const SALT_ROUNDS = 10;
-
-// Rutas de listado por rol, usadas como destino por defecto al activar/inactivar
-// un usuario (no dependemos del header Referrer, que Helmet bloquea por
-// política de privacidad y por eso siempre terminábamos en el dashboard).
 const LIST_PATH_BY_ROLE = {
   [ROLES.CLIENT]: "/admin/clients",
   [ROLES.DELIVERY]: "/admin/deliveries",
@@ -22,56 +16,11 @@ const LIST_PATH_BY_ROLE = {
   [ROLES.ADMIN]: "/admin/administrators",
 };
 
-/* ---------------------------- Dashboard ---------------------------- */
-
 export async function dashboard(req, res) {
-  const startOfDay = new Date();
-  startOfDay.setHours(0, 0, 0, 0);
-
-  const [
-    totalOrders,
-    ordersToday,
-    commercesActive,
-    commercesInactive,
-    clientsActive,
-    clientsInactive,
-    deliveriesActive,
-    deliveriesInactive,
-    totalProducts,
-  ] = await Promise.all([
-    Order.countDocuments(),
-    Order.countDocuments({ createdAt: { $gte: startOfDay } }),
-    User.countDocuments({ role: ROLES.COMMERCE, isActive: true }),
-    User.countDocuments({ role: ROLES.COMMERCE, isActive: false }),
-    User.countDocuments({ role: ROLES.CLIENT, isActive: true }),
-    User.countDocuments({ role: ROLES.CLIENT, isActive: false }),
-    User.countDocuments({ role: ROLES.DELIVERY, isActive: true }),
-    User.countDocuments({ role: ROLES.DELIVERY, isActive: false }),
-    Product.countDocuments(),
-  ]);
-
-  res.render("admin/dashboard", {
-    title: "Dashboard",
-    metrics: {
-      totalOrders,
-      ordersToday,
-      commercesActive,
-      commercesInactive,
-      clientsActive,
-      clientsInactive,
-      deliveriesActive,
-      deliveriesInactive,
-      totalProducts,
-    },
-  });
+  res.render("admin/dashboard", { title: "Dashboard", metrics: await getDashboardMetrics() });
 }
 
-/* ---------------------------- Clientes / Deliveries ---------------------------- */
-
 async function renderUserList(req, res, { role, view, title }) {
-  // .lean() -> objetos planos, así Handlebars puede leer sus propiedades
-  // (los documentos de Mongoose las exponen vía getters del prototipo, y
-  // Handlebars bloquea el acceso a propiedades heredadas por seguridad).
   const users = await User.find({ role }).sort({ createdAt: -1 }).lean();
 
   const items = await Promise.all(
@@ -131,8 +80,6 @@ export async function toggleUserStatus(req, res) {
   return res.redirect(redirectTo);
 }
 
-/* ---------------------------- Configuración ---------------------------- */
-
 export async function showConfiguration(req, res) {
   const configuration = await Configuration.findOne({ key: "ITBIS" }).lean();
   res.render("admin/configuration", {
@@ -154,8 +101,6 @@ export async function updateConfiguration(req, res) {
   req.flash("success", `Configuración actualizada. El ITBIS actual es ${configuration.value}%.`);
   return res.redirect("/admin/configuration");
 }
-
-/* ---------------------------- Administradores ---------------------------- */
 
 export async function listAdministrators(req, res) {
   const admins = await User.find({ role: ROLES.ADMIN }).sort({ createdAt: -1 }).lean();
@@ -179,15 +124,13 @@ export async function createAdministrator(req, res) {
     return res.redirect("/admin/administrators/new");
   }
 
-  const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-
   await User.create({
     firstName,
     lastName,
     identificationCard,
     userName,
     email: email.toLowerCase(),
-    password: hashedPassword,
+    password: await hashPassword(password),
     phone,
     role: ROLES.ADMIN,
     isActive: true,
@@ -232,7 +175,7 @@ export async function updateAdministrator(req, res) {
   admin.userName = userName;
   admin.email = email.toLowerCase();
   admin.phone = phone;
-  if (password) admin.password = await bcrypt.hash(password, SALT_ROUNDS);
+  if (password) admin.password = await hashPassword(password);
 
   await admin.save();
   req.flash("success", "Administrador actualizado correctamente.");
@@ -248,16 +191,10 @@ export async function confirmToggleAdministrator(req, res) {
   res.render("admin/administrator-toggle", { title: "Confirmar acción", admin });
 }
 
-/* ---------------------------- Tipos de comercio ---------------------------- */
-
 export async function listCommerceTypes(req, res) {
   const types = await CommerceType.find().sort({ name: 1 }).lean();
 
-  const items = await Promise.all(
-    types.map(async (t) => ({ ...t, commerceCount: await Commerce.countDocuments({ commerceType: t._id }) }))
-  );
-
-  res.render("admin/commerce-types", { title: "Tipos de comercio", types: items });
+  res.render("admin/commerce-types", { title: "Tipos de comercio", types: await withCommerceCounts(types) });
 }
 
 export function showNewCommerceType(req, res) {
@@ -321,23 +258,7 @@ export async function confirmDeleteCommerceType(req, res) {
 }
 
 export async function deleteCommerceType(req, res) {
-  const commerceType = await CommerceType.findById(req.params.id);
-  if (!commerceType) {
-    req.flash("errors", "Tipo de comercio no encontrado.");
-    return res.redirect("/admin/commerce-types");
-  }
-
-  const commerces = await Commerce.find({ commerceType: commerceType._id });
-  const commerceIds = commerces.map((c) => c._id);
-  const userIds = commerces.map((c) => c.user);
-
-  await Product.deleteMany({ commerce: { $in: commerceIds } });
-  await Category.deleteMany({ commerce: { $in: commerceIds } });
-  await Order.deleteMany({ commerce: { $in: commerceIds } });
-  await Favorite.deleteMany({ commerce: { $in: commerceIds } });
-  await Commerce.deleteMany({ _id: { $in: commerceIds } });
-  await User.deleteMany({ _id: { $in: userIds } });
-  await commerceType.deleteOne();
+  await deleteCommerceTypeCascade(req.params.id);
 
   req.flash("success", "Tipo de comercio y toda la información asociada fue eliminada.");
   return res.redirect("/admin/commerce-types");

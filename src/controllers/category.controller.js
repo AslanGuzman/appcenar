@@ -1,17 +1,12 @@
 import { Category } from "../models/Category.js";
 import { Product } from "../models/Product.js";
-import { Commerce } from "../models/Commerce.js";
 import { success, fail } from "../utils/apiResponse.js";
 import { buildPagination, buildPaginatedResponse } from "../utils/pagination.js";
-
-async function getCommerceIdFromUser(userId) {
-  const commerce = await Commerce.findOne({ user: userId });
-  return commerce ? commerce._id : null;
-}
+import { getCommerceIdByUser } from "../services/user.service.js";
 
 export async function listMyCategories(req, res, next) {
   try {
-    const commerceId = await getCommerceIdFromUser(req.user.id);
+    const commerceId = await getCommerceIdByUser(req.user.id);
     const { search } = req.query;
     const { page, pageSize, skip, sort } = buildPagination(req.query, { defaultSortBy: "name", defaultSortDirection: "asc" });
 
@@ -38,7 +33,7 @@ export async function listMyCategories(req, res, next) {
 
 export async function getCategoryById(req, res, next) {
   try {
-    const commerceId = await getCommerceIdFromUser(req.user.id);
+    const commerceId = await getCommerceIdByUser(req.user.id);
     const category = await Category.findOne({ _id: req.params.id, commerce: commerceId });
     if (!category) {
       return fail(res, { statusCode: 404, message: "Categoría no encontrada." });
@@ -51,7 +46,7 @@ export async function getCategoryById(req, res, next) {
 
 export async function createCategory(req, res, next) {
   try {
-    const commerceId = await getCommerceIdFromUser(req.user.id);
+    const commerceId = await getCommerceIdByUser(req.user.id);
     const { name, description } = req.body;
 
     const existing = await Category.findOne({ commerce: commerceId, name });
@@ -68,7 +63,7 @@ export async function createCategory(req, res, next) {
 
 export async function updateCategory(req, res, next) {
   try {
-    const commerceId = await getCommerceIdFromUser(req.user.id);
+    const commerceId = await getCommerceIdByUser(req.user.id);
     const category = await Category.findOne({ _id: req.params.id, commerce: commerceId });
     if (!category) {
       return fail(res, { statusCode: 404, message: "Categoría no encontrada." });
@@ -87,7 +82,7 @@ export async function updateCategory(req, res, next) {
 
 export async function deleteCategory(req, res, next) {
   try {
-    const commerceId = await getCommerceIdFromUser(req.user.id);
+    const commerceId = await getCommerceIdByUser(req.user.id);
     const category = await Category.findOne({ _id: req.params.id, commerce: commerceId });
     if (!category) {
       return fail(res, { statusCode: 404, message: "Categoría no encontrada." });

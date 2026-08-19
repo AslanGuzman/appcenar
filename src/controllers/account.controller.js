@@ -51,7 +51,6 @@ export async function updateMyProfile(req, res, next) {
       return success(res, { message: "Perfil actualizado correctamente.", data: { user: user.toSafeObject(), commerce } });
     }
 
-    // Client o Delivery
     const { firstName, lastName, phone } = req.body;
     if (firstName) user.firstName = firstName;
     if (lastName) user.lastName = lastName;

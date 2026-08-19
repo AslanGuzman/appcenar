@@ -14,8 +14,6 @@ async function bootstrap() {
     await seedDefaultAdmin();
     await seedDefaultConfigurations();
 
-    // Datos de demostración (comercios, productos, clientes, deliveries, pedidos).
-    // No hace nada si la base de datos ya tiene datos.
     if (process.env.SEED_DEMO_DATA !== "false") {
       await seedDemoData();
     }

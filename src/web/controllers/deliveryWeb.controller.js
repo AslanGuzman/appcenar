@@ -2,6 +2,7 @@ import { Order } from "../../models/Order.js";
 import { User } from "../../models/User.js";
 import { ORDER_STATUS } from "../../utils/constants.js";
 import { popFormData } from "../utils/formData.js";
+import { completeOrder as completeAssignedOrder } from "../../services/order.service.js";
 
 export async function home(req, res) {
   const orders = await Order.find({ delivery: req.session.user.id })
@@ -35,19 +36,13 @@ export async function showOrderDetail(req, res) {
 }
 
 export async function completeOrder(req, res) {
-  const order = await Order.findOne({ _id: req.params.id, delivery: req.session.user.id });
-
-  if (!order || order.status !== ORDER_STATUS.IN_PROGRESS) {
-    req.flash("errors", "Este pedido no se puede completar.");
-    return res.redirect(`/delivery/orders/${req.params.id}`);
+  try {
+    await completeAssignedOrder({ orderId: req.params.id, deliveryId: req.session.user.id });
+    req.flash("success", "Pedido completado correctamente.");
+  } catch (err) {
+    req.flash("errors", err.message);
   }
 
-  order.status = ORDER_STATUS.COMPLETED;
-  await order.save();
-
-  await User.findByIdAndUpdate(req.session.user.id, { isAvailable: true });
-
-  req.flash("success", "Pedido completado correctamente.");
   return res.redirect(`/delivery/orders/${req.params.id}`);
 }
 

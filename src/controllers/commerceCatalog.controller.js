@@ -25,7 +25,6 @@ export async function getActiveCommerceTypes(req, res, next) {
   }
 }
 
-// GET /api/commerce
 export async function getCommercesByType(req, res, next) {
   try {
     const { commerceTypeId, search } = req.query;
@@ -35,7 +34,6 @@ export async function getCommercesByType(req, res, next) {
       return fail(res, { statusCode: 400, message: "commerceTypeId es requerido." });
     }
 
-    // Solo comercios cuyo usuario está activo
     const activeCommerceUsers = await User.find({ role: "Commerce", isActive: true }).select("_id");
     const activeUserIds = activeCommerceUsers.map((u) => u._id);
 
@@ -67,7 +65,6 @@ export async function getCommercesByType(req, res, next) {
   }
 }
 
-// GET /api/commerce/:commerceId/catalog
 export async function getCommerceCatalog(req, res, next) {
   try {
     const { commerceId } = req.params;

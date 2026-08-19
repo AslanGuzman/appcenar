@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { verifyToken, authorize } from "../middlewares/auth.middleware.js";
 import { ROLES } from "../utils/constants.js";
-import { getDashboardMetrics } from "../controllers/adminDashboard.controller.js";
+import { getDashboard } from "../controllers/adminDashboard.controller.js";
 
 const router = Router();
 
@@ -21,6 +21,6 @@ const router = Router();
  *     responses:
  *       200: { description: OK }
  */
-router.get("/", verifyToken, authorize(ROLES.ADMIN), getDashboardMetrics);
+router.get("/", verifyToken, authorize(ROLES.ADMIN), getDashboard);
 
 export default router;

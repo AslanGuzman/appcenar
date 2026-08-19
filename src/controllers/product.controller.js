@@ -1,18 +1,13 @@
 import { Product } from "../models/Product.js";
 import { Category } from "../models/Category.js";
-import { Commerce } from "../models/Commerce.js";
 import { success, fail } from "../utils/apiResponse.js";
 import { AppError } from "../utils/appError.js";
 import { buildPagination, buildPaginatedResponse } from "../utils/pagination.js";
-
-async function getCommerceIdFromUser(userId) {
-  const commerce = await Commerce.findOne({ user: userId });
-  return commerce ? commerce._id : null;
-}
+import { getCommerceIdByUser } from "../services/user.service.js";
 
 export async function listMyProducts(req, res, next) {
   try {
-    const commerceId = await getCommerceIdFromUser(req.user.id);
+    const commerceId = await getCommerceIdByUser(req.user.id);
     const { search, categoryId } = req.query;
     const { page, pageSize, skip, sort } = buildPagination(req.query, { defaultSortBy: "name", defaultSortDirection: "asc" });
 
@@ -33,7 +28,7 @@ export async function listMyProducts(req, res, next) {
 
 export async function getProductById(req, res, next) {
   try {
-    const commerceId = await getCommerceIdFromUser(req.user.id);
+    const commerceId = await getCommerceIdByUser(req.user.id);
     const product = await Product.findOne({ _id: req.params.id, commerce: commerceId }).populate("category", "name");
     if (!product) {
       return fail(res, { statusCode: 404, message: "Producto no encontrado." });
@@ -46,7 +41,7 @@ export async function getProductById(req, res, next) {
 
 export async function createProduct(req, res, next) {
   try {
-    const commerceId = await getCommerceIdFromUser(req.user.id);
+    const commerceId = await getCommerceIdByUser(req.user.id);
     const { name, description, price, categoryId } = req.body;
 
     const category = await Category.findOne({ _id: categoryId, commerce: commerceId });
@@ -75,7 +70,7 @@ export async function createProduct(req, res, next) {
 
 export async function updateProduct(req, res, next) {
   try {
-    const commerceId = await getCommerceIdFromUser(req.user.id);
+    const commerceId = await getCommerceIdByUser(req.user.id);
     const product = await Product.findOne({ _id: req.params.id, commerce: commerceId });
     if (!product) {
       return fail(res, { statusCode: 404, message: "Producto no encontrado." });
@@ -105,7 +100,7 @@ export async function updateProduct(req, res, next) {
 
 export async function deleteProduct(req, res, next) {
   try {
-    const commerceId = await getCommerceIdFromUser(req.user.id);
+    const commerceId = await getCommerceIdByUser(req.user.id);
     const product = await Product.findOne({ _id: req.params.id, commerce: commerceId });
     if (!product) {
       return fail(res, { statusCode: 404, message: "Producto no encontrado." });

@@ -23,15 +23,12 @@ const userSchema = new Schema(
     isActive: { type: Boolean, default: false },
     isDefaultAdmin: { type: Boolean, default: false },
 
-    // Activación de cuenta
     activateToken: { type: String, default: null },
     activateTokenExpiration: { type: Date, default: null },
 
-    // Recuperación de contraseña
     resetToken: { type: String, default: null },
     resetTokenExpiration: { type: Date, default: null },
 
-    // Solo aplica a role = Delivery
     isAvailable: { type: Boolean, default: true },
   },
   { timestamps: true }

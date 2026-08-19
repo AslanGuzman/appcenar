@@ -46,7 +46,6 @@ router.patch(
   verifyToken,
   upload.fields([{ name: "profileImage", maxCount: 1 }, { name: "logo", maxCount: 1 }]),
   (req, res, next) => {
-    // Normaliza el archivo recibido (profileImage o logo) para el controlador
     req.file = req.files?.profileImage?.[0] || req.files?.logo?.[0] || null;
     next();
   },
