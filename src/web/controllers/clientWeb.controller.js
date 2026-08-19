@@ -203,7 +203,7 @@ export async function placeOrder(req, res) {
     .map((cartItem) => {
       const product = products.find((p) => p._id.toString() === cartItem.productId);
       if (!product) return null;
-      return { product: product._id, name: product.name, price: product.price, quantity: 1 };
+      return { product: product._id, name: product.name, price: product.price, image: product.image, quantity: 1 };
     })
     .filter(Boolean);
 

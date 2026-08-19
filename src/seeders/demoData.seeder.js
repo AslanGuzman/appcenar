@@ -280,6 +280,7 @@ export async function seedDemoData() {
       product: products[i]._id,
       name: products[i].name,
       price: products[i].price,
+      image: products[i].image,
       quantity: 1,
     }));
   }

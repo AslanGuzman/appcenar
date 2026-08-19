@@ -3,7 +3,7 @@ import { Category } from "../../models/Category.js";
 import { Product } from "../../models/Product.js";
 import { Order } from "../../models/Order.js";
 import { User } from "../../models/User.js";
-import { ROLES, ORDER_STATUS } from "../../utils/constants.js";
+import { ROLES, ORDER_STATUS, ORDER_STATUS_SEQUENCE } from "../../utils/constants.js";
 import { popFormData } from "../utils/formData.js";
 
 async function getCommerce(userId) {
@@ -17,15 +17,24 @@ function toProductForm(req, product = {}) {
 
 /* ---------------------------- Home / Pedidos ---------------------------- */
 
+function byStatusThenNewest(a, b) {
+  const rank = ORDER_STATUS_SEQUENCE.indexOf(a.status) - ORDER_STATUS_SEQUENCE.indexOf(b.status);
+  return rank !== 0 ? rank : new Date(b.createdAt) - new Date(a.createdAt);
+}
+
 export async function home(req, res) {
   const commerce = await getCommerce(req.session.user.id);
-  const orders = await Order.find({ commerce: commerce._id }).sort({ createdAt: -1 }).lean();
-  res.render("commerce/home", { title: "Pedidos", orders });
+  const orders = await Order.find({ commerce: commerce._id })
+    .populate("commerce", "name logo")
+    .lean();
+
+  res.render("commerce/home", { title: "Pedidos", orders: orders.sort(byStatusThenNewest) });
 }
 
 export async function showOrderDetail(req, res) {
   const commerce = await getCommerce(req.session.user.id);
   const order = await Order.findOne({ _id: req.params.id, commerce: commerce._id })
+    .populate("commerce", "name logo")
     .populate("delivery", "firstName lastName phone")
     .lean();
 
